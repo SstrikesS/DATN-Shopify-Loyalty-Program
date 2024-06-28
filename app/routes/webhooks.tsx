@@ -10,7 +10,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     throw new Response();
   }
 
-  // The topics handled here should be declared in the shopify.app.toml.
+  // The topics handled here should be declared in the shopify.home.toml.
   // More info: https://shopify.dev/docs/apps/build/cli-for-apps/app-configuration
   switch (topic) {
     case "APP_UNINSTALLED":

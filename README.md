@@ -92,7 +92,7 @@ export async function loader({ request }) {
 
 This template comes preconfigured with examples of:
 
-1. Setting up your Shopify app in [/app/shopify.server.ts](https://github.com/Shopify/shopify-app-template-remix/blob/main/app/shopify.server.ts)
+1. Setting up your Shopify app in [/app/shopify.server.store.ts](https://github.com/Shopify/shopify-app-template-remix/blob/main/app/shopify.server.ts)
 2. Querying data using Graphql. Please see: [/app/routes/app.\_index.tsx](https://github.com/Shopify/shopify-app-template-remix/blob/main/app/routes/app._index.tsx).
 3. Responding to mandatory webhooks in [/app/routes/webhooks.tsx](https://github.com/Shopify/shopify-app-template-remix/blob/main/app/routes/webhooks.tsx)
 
@@ -308,7 +308,7 @@ See the [Prisma documentation](https://www.prisma.io/docs/getting-started/setup-
 Shopify apps are built on a variety of Shopify tools to create a great merchant experience.
 
 <!-- TODO: Uncomment this after we've updated the docs -->
-<!-- The [create an app](https://shopify.dev/docs/apps/getting-started/create) tutorial in our developer documentation will guide you through creating a Shopify app using this template. -->
+<!-- The [create an home](https://shopify.dev/docs/apps/getting-started/create) tutorial in our developer documentation will guide you through creating a Shopify home using this template. -->
 
 The Remix app template comes with the following out-of-the-box functionality:
 
