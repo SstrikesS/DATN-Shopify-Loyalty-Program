@@ -1,10 +1,38 @@
-# This file stores configurations for your Shopify app.
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-scopes = "write_products"
+client_id = "c0237746d5feff0054b309baee1f1f36"
+name = "thanhnt-discount-app"
+handle = "thanhnt-discount-app"
+application_url = "https://departmental-mails-jewellery-nail.trycloudflare.com"
+embedded = true
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = "sstrikess-test-discount-app.myshopify.com"
+include_config_on_deploy = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_customers,read_discounts,read_orders,read_products,read_shipping,write_customers,write_discounts"
+
+[auth]
+redirect_urls = [
+  "https://departmental-mails-jewellery-nail.trycloudflare.com/auth/callback",
+  "https://departmental-mails-jewellery-nail.trycloudflare.com/auth/shopify/callback",
+  "https://departmental-mails-jewellery-nail.trycloudflare.com/api/auth/callback"
+]
 
 [webhooks]
 api_version = "2024-04"
 
   [[webhooks.subscriptions]]
-  topics = [ "app/uninstalled" ]
+  topics = [ "app/uninstalled", "customers/create", "orders/paid" ]
   uri = "/webhooks"
+
+[app_proxy]
+url = "https://departmental-mails-jewellery-nail.trycloudflare.com"
+subpath = "loyalty-customer-reward"
+prefix = "apps"
+
+[pos]
+embedded = false
