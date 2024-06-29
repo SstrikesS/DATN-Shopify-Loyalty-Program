@@ -27,13 +27,23 @@ import {
     GiftCardIcon
 } from '@shopify/polaris-icons';
 import {authenticate} from "~/shopify.server";
-import {json, type LoaderFunctionArgs} from "@remix-run/node";
+import type {ActionFunctionArgs, LoaderFunctionArgs} from "@remix-run/node";
+import {json} from "@remix-run/node";
 import {useActionData, useLoaderData, useNavigate, useSubmit} from "@remix-run/react";
 import {useCallback, useEffect, useState} from "react";
 import type {DefaultIntervalType} from "~/utils/helper";
 import {isStringInteger} from "~/utils/helper";
 import {shopQuery} from "~/utils/shopify_query";
 import {getStore} from "~/server/server.store";
+import {getEarnPointPrograms} from "~/server/server.earn_point";
+import {getRedeemPointPrograms} from "~/server/server.redeem_point";
+import type {
+    discountCodeBasicCreateQueryType,
+    RedeemPointType
+} from "~/class/redeem_point.class";
+import type {PointSetting} from "~/class/store.class";
+import Store from "~/class/store.class";
+
 
 export async function loader({request}: LoaderFunctionArgs) {
     const {admin} = await authenticate.admin(request);
@@ -45,11 +55,16 @@ export async function loader({request}: LoaderFunctionArgs) {
     );
     const {data} = await response.json();
     const store = await getStore(data.shop);
-    if (store) {
+    if (store instanceof Store) {
+        const earnPointProgramList = await getEarnPointPrograms(store.id);
+        const redeemPointProgramList = await getRedeemPointPrograms(store.id);
+        // await createEarnPoint()
         return json({
             data: {
                 pointProgram: store.pointSetting,
                 shopId: store.id,
+                earnPointProgramList: earnPointProgramList,
+                redeemPointProgramList: redeemPointProgramList,
             }
         })
     } else {
@@ -57,12 +72,46 @@ export async function loader({request}: LoaderFunctionArgs) {
             data: null,
         })
     }
+
 }
 
-export async function action({request}: LoaderFunctionArgs) {
-    return json({
-        action: 'success',
-    })
+export async function action({request}: ActionFunctionArgs) {
+    const {admin} = await authenticate.admin(request);
+    const response = await admin.graphql(`
+        query MyQuery {
+            ${shopQuery}
+        }`
+    );
+    const {data} = await response.json();
+    const store = await getStore(data.shop);
+    if (store instanceof Store) {
+        const formData = await request.formData();
+        let updateData = {} as PointSetting;
+        updateData.currency = {
+            plural: formData.get('point_currency_plural') as string,
+            singular: formData.get('point_currency_singular') as string,
+        }
+        if (formData.get('point_expiry_status') === "false") {
+            updateData.point_expiry_time = -1;
+            updateData.point_expiry_interval = store.pointSetting.point_expiry_interval;
+        } else {
+            updateData.point_expiry_time = parseInt(formData.get('point_expiry_time') as string)
+            updateData.point_expiry_interval = formData.get('point_expiry_interval') as DefaultIntervalType
+        }
+        updateData.status = formData.get('status') === "true";
+        store.pointSetting = updateData;
+        await store.saveStore();
+
+        return json({
+            success: true,
+            message: 'Setting is updated successfully'
+        })
+    } else {
+        return json({
+            success: false,
+            message: 'Store not found'
+        })
+    }
 }
 
 export default function PointProgram() {
@@ -144,64 +193,40 @@ export default function PointProgram() {
             } else {
                 setPeriodTimeError(undefined);
             }
+        } else {
+            setPeriodTimeError(undefined);
         }
     }, [periodTime]);
 
     useEffect(() => {
         if (actionData) {
-            if (actionData.action === 'success') {
-                shopify.toast.show('Updated successfully');
+            if (actionData.success === true) {
+                shopify.toast.show(actionData.message);
                 setIsSubmitting(false);
             } else {
-                shopify.toast.show('Failed to update');
+                shopify.toast.show('Failed to update\nReason: ' + actionData.message);
                 setIsSubmitting(false);
             }
         }
     }, [actionData]);
 
-    let EPointData: any[] = [];
-    let RPointData: any[] = [];
-
-    // let EPointData = data.earnPointProgram.map((value) => {
-    //     return {
-    //         id: value.key,
-    //         url: `../program/point/earn/${value.id}`,
-    //         reward_point: value.reward_points,
-    //         status: value.status ? <Badge tone="success">Active</Badge> : <Badge tone="critical">Inactive</Badge>,
-    //         name: value.name,
-    //         icon: value.icon,
-    //     };
-    // });
-    // let RPointData = data.redeemPointProgram.map((value) => {
-    //     return {
-    //         id: value.key,
-    //         url: `../reward/${value.id}?type=${value.key}`,
-    //         reward_point: value.pointsCost,
-    //         reward: value.discountValue,
-    //         status: value.status ? <Badge tone="success">Active</Badge> : <Badge tone="critical">Inactive</Badge>,
-    //         title: value.title,
-    //         icon: value.icon,
-    //     };
-    // })
-
     const addRedeemPoints = () => {
         setIsShowModal(true);
     }
     const handleSubmit = async () => {
-        const submitData = JSON.stringify({
-            id: data?.shopId,
-            point_currency: currency,
-            point_expiry: {
-                status: expiryStatus === 'active',
-                period_time: expiryStatus === 'active' ? parseInt(periodTime) : undefined,
-                period_unit: expiryStatus === 'active' ? periodUnit : undefined,
-                reactivation_email_time: expiryStatus === 'active' ? 30 : undefined,
-                last_chance_email_time: expiryStatus === 'active' ? 1 : undefined,
-            },
-            status: programStatus === 'program-active',
-        });
-
-        submit(submitData, {replace: true, method: 'PUT', encType: "application/json"});
+        if (currencyError.plural || currencyError.singular || periodTimeError || data === null) {
+            shopify.toast.show("Invalid Input!");
+            setIsSubmitting(false);
+        } else {
+            const formData = new FormData();
+            formData.append('point_currency_singular', currency.singular);
+            formData.append('point_currency_plural', currency.plural)
+            formData.append('point_expiry_interval', periodUnit);
+            formData.append('point_expiry_time', periodTime);
+            formData.append('point_expiry_status', `${expiryStatus === 'active'}`);
+            formData.append('status', `${programStatus === 'program-active'}`);
+            submit(formData, {replace: true, method: 'PUT', encType: "multipart/form-data"});
+        }
     }
     const activator = <Button size="medium" onClick={addRedeemPoints}>Add new ways</Button>;
 
@@ -215,6 +240,35 @@ export default function PointProgram() {
             image="https://cdn.shopify.com/s/files/1/2376/3301/products/emptystate-files.png"
         >
         </EmptyState>;
+
+    const RewardInfo = (item: RedeemPointType) => {
+        let info = ""
+        switch (item.type) {
+            case "DiscountCodeBasicAmount":
+                const basic = item.query as discountCodeBasicCreateQueryType;
+                info = `${basic.customerGets?.value}$ off`;
+                break;
+            case "DiscountCodeBasicPercentage":
+                const percentage = item.query as discountCodeBasicCreateQueryType;
+                info = `${percentage.customerGets?.value}% off`;
+                break;
+            case "DiscountCodeFreeShipping":
+                // const freeShipping = item.query as discountCodeFreeShippingCreate;
+                info = `Free Shipping`
+                break;
+            case "DiscountCodeBxgy":
+                // const bxgy = item.query as discountCodeBxgyCreate;
+                info = 'Buy X Get Y';
+                break;
+            case "GiftCard":
+                // const giftCard = item.query as giftCardCreateQueryType;
+                info = 'Gift Card';
+                break;
+            default:
+                break;
+        }
+        return info;
+    }
 
     return (
         <div style={{
@@ -267,38 +321,40 @@ export default function PointProgram() {
                                         </Text>
                                         <Divider borderColor="border"/>
                                         <Card>
-                                            <ResourceList items={EPointData}
-                                                          renderItem={(item) => {
-                                                              const {id, url, name, icon, reward_point, status} = item;
-                                                              const media = <img
-                                                                  src={icon}
-                                                                  alt=""/>
+                                            <ResourceList
+                                                items={data?.earnPointProgramList ? data?.earnPointProgramList : []}
+                                                renderItem={(item) => {
+                                                    const {id, name, icon, pointValue, status, type} = item;
+                                                    const media = <img
+                                                        src={icon}
+                                                        alt=""/>
 
-                                                              return (
-                                                                  <ResourceItem
-                                                                      id={id}
-                                                                      url={url}
-                                                                      media={media}
-                                                                      accessibilityLabel={`View details for ${name}`}
-                                                                  >
-                                                                      <Text variant="bodyMd" fontWeight="bold" as="h3">
-                                                                          {name}
-                                                                      </Text>
-                                                                      <div>
-                                                                          <InlineStack gap="400" wrap={false}>
-                                                                              <div style={{
-                                                                                  width: '80%'
-                                                                              }}>{reward_point} points
-                                                                              </div>
-                                                                              <div style={{
-                                                                                  float: "right",
-                                                                                  width: '20%'
-                                                                              }}>{status}</div>
-                                                                          </InlineStack>
-                                                                      </div>
-                                                                  </ResourceItem>
-                                                              );
-                                                          }}
+                                                    return (
+                                                        <ResourceItem
+                                                            id={id}
+                                                            url={`../program/point/earn/${id}`}
+                                                            media={media}
+                                                            accessibilityLabel={`View details for ${name}`}
+                                                        >
+                                                            <Text variant="bodyMd" fontWeight="bold" as="h3">
+                                                                {name}
+                                                            </Text>
+                                                            <div>
+                                                                <InlineStack gap="400" wrap={false}>
+                                                                    <div style={{
+                                                                        width: '80%'
+                                                                    }}> {type === 'place_an_order/money_spent' ? `${pointValue} points for each 1$ spent`: `${pointValue} points`}
+                                                                    </div>
+                                                                    <div style={{
+                                                                        float: "right",
+                                                                        width: '20%'
+                                                                    }}>{status ? <Badge tone="success">Active</Badge> :
+                                                                        <Badge tone="critical">Inactive</Badge>}</div>
+                                                                </InlineStack>
+                                                            </div>
+                                                        </ResourceItem>
+                                                    );
+                                                }}
                                             />
                                         </Card>
                                     </BlockStack>
@@ -327,31 +383,31 @@ export default function PointProgram() {
                                                 <ResourceList items={[
                                                     {
                                                         id: '1',
-                                                        url: '../reward/new?type=amount_discount',
+                                                        url: '../program/DiscountCodeBasicAmount/new',
                                                         name: 'Amount discount',
                                                         icon: CashDollarIcon,
                                                     },
                                                     {
                                                         id: '2',
-                                                        url: '../reward/new?type=percentage_off',
+                                                        url: '../program/DiscountCodeBasicPercentage/new',
                                                         name: 'Percentage off',
                                                         icon: DiscountIcon,
                                                     },
                                                     {
                                                         id: '3',
-                                                        url: '../reward/new?type=free_shipping',
+                                                        url: '../program/DiscountCodeFreeShipping/new',
                                                         name: 'Free Shipping',
                                                         icon: DeliveryIcon,
                                                     },
                                                     {
                                                         id: '4',
-                                                        url: '../reward/new?type=free_product',
+                                                        url: '../program/DiscountCodeBxgy/new',
                                                         name: 'Free Product',
                                                         icon: ProductIcon,
                                                     },
                                                     {
                                                         id: '5',
-                                                        url: '../reward/new?type=gift_card',
+                                                        url: '../program/GiftCard/new',
                                                         name: 'Gift Card',
                                                         icon: GiftCardIcon,
                                                     },
@@ -386,17 +442,16 @@ export default function PointProgram() {
                                         </Text>
                                         <Divider borderColor="border"/>
                                         <Card>
-                                            {RPointData.length > 0 ? (
+                                            {data?.redeemPointProgramList && data?.redeemPointProgramList.length > 0 ? (
                                                 <ResourceList
-                                                    items={RPointData}
+                                                    items={data?.redeemPointProgramList}
                                                     renderItem={(item) => {
                                                         const {
                                                             id,
-                                                            url,
                                                             icon,
-                                                            title,
-                                                            reward,
-                                                            reward_point,
+                                                            type,
+                                                            name,
+                                                            pointValue,
                                                             status
                                                         } = item;
                                                         const media = <img
@@ -407,24 +462,20 @@ export default function PointProgram() {
                                                         return (
                                                             <ResourceItem
                                                                 id={id}
-                                                                url={url}
+                                                                url={`../reward/${id}?type=${type}`}
                                                                 media={media}
-                                                                accessibilityLabel={`View details for ${title}`}
+                                                                accessibilityLabel={`View details for ${name}`}
                                                             >
                                                                 <Text variant="bodyMd" fontWeight="bold" as="h3">
-                                                                    {title}
+                                                                    {name}
                                                                 </Text>
                                                                 <div>
                                                                     <InlineStack gap="400" wrap={false}>
                                                                         <div style={{
                                                                             width: '80%'
                                                                         }}>
-                                                                            {reward_point} points exchange for {
-                                                                            id === 'amount_discount' ? `${reward}$ off` :
-                                                                                id === 'percentage_off' ? `${reward}% off` :
-                                                                                    id === 'free_shipping' ? 'Free Shipping' :
-                                                                                        null
-                                                                        }
+                                                                            {pointValue} points exchange
+                                                                            for {RewardInfo(item as RedeemPointType)}
                                                                         </div>
                                                                         <div style={{
                                                                             float: "right",
@@ -439,7 +490,7 @@ export default function PointProgram() {
                                             ) : (
                                                 <ResourceList
                                                     emptyState={emptyStateMarkup}
-                                                    items={RPointData}
+                                                    items={data?.redeemPointProgramList ? data?.redeemPointProgramList : []}
                                                     renderItem={() => <></>}
                                                     resourceName={{singular: 'program', plural: 'programs'}}
                                                 >

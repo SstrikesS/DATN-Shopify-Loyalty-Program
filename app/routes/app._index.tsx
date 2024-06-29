@@ -16,10 +16,29 @@ import {
 } from "@shopify/polaris";
 import { TitleBar, useAppBridge } from "@shopify/app-bridge-react";
 import { authenticate } from "~/shopify.server";
+import {shopQuery} from "~/utils/shopify_query";
+import {addNewMemberStore, isMemberStore} from "~/server/server.store";
+import {addEarnPointProgram} from "~/server/server.earn_point";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await authenticate.admin(request);
+    const {admin} = await authenticate.admin(request);
 
+    const response = await admin.graphql(`
+        query MyQuery {
+            ${shopQuery}
+        }`
+    );
+    const {data} = await response.json();
+    const checkStore = await isMemberStore(data.shop);
+
+    if(!checkStore) {
+        await addNewMemberStore(data.shop.id).then(() => {
+            console.log(`--Store ${data.shop.id} setup successfully--`)
+        })
+        await addEarnPointProgram(data.shop.id).then(() => {
+            console.log(`--Default program of store ${data.shop.id} setup successfully--`)
+        })
+    }
   return null;
 };
 

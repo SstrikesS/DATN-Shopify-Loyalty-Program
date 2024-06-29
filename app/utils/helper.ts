@@ -20,6 +20,42 @@ export const de_pointSetting = {
     status: true,
 } as PointSetting
 
+export const de_listEarnPointProgram = [
+    {
+        type: 'place_an_order/money_spent',
+        icon: 'https://cdn-icons-png.flaticon.com/32/2435/2435281.png',
+        name: 'Complete an order',
+        point_value: 5,
+        limit_usage: -1,
+        customer_eligibility: "null",
+        limit_reset_interval: "day",
+        limit_reset_value: 1,
+        status: true,
+    },
+    {
+        type: 'happy_birthday',
+        icon: 'https://cdn-icons-png.flaticon.com/32/6479/6479517.png',
+        name: 'Happy Birthday',
+        point_value: 150,
+        limit_usage: -1,
+        customer_eligibility: "null",
+        limit_reset_interval: "day",
+        limit_reset_value: 1,
+        status: false,
+    },
+    {
+        type: 'sign_in',
+        icon: 'https://cdn-icons-png.flaticon.com/32/10479/10479877.png',
+        name: 'Sign In',
+        point_value: 200,
+        limit_usage: -1,
+        customer_eligibility: "null",
+        limit_reset_interval: "day",
+        limit_reset_value: 1,
+        status: false,
+    }
+]
+
 export function now() {
     return new Date();
 }

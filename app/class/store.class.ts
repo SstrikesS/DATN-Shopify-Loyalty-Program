@@ -1,8 +1,10 @@
 import type {DefaultIntervalType} from "~/utils/helper"
+import storeModel from "~/models/storeSetting"
 export type CurrencyType = {
     plural: string,
     singular: string,
 }
+
 export type StoreType = {
     id: string,
     name: string,
@@ -86,6 +88,14 @@ export default class Store {
 
     get myshopifyDomain() {
         return this._myshopifyDomain
+    }
+
+    async saveStore() {
+        await storeModel.updateOne({id: this.id}, {
+            vip_program_setting: this.vipSetting,
+            point_program_setting: this.pointSetting,
+            status: this.status,
+        })
     }
 
 }

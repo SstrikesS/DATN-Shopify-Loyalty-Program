@@ -1,5 +1,5 @@
 export const shopQuery =
-`
+    `
     shop {
         id
         name
@@ -9,6 +9,22 @@ export const shopQuery =
             displayName
             partnerDevelopment
             shopifyPlus
+        }
+    }
+`
+
+export const collectionQuery =
+`
+    collections(first: 100) {
+        edges {
+            node {
+               id
+               title
+            }
+            cursor
+        }
+        pageInfo {
+            hasNextPage
         }
     }
 `
