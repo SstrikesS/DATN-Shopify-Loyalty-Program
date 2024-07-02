@@ -65,7 +65,7 @@ const redeemPointSchema = new Schema({
     prefix: {type: String},
     limit_usage: {type: Number, required: true},
     customer_eligibility: {type: String, required: true},
-    limit_reset_interval: {type: String, default: 'month'},
+    limit_reset_interval: {type: String, default: 'day'},
     limit_reset_value: {type: Number, default: -1},
     status: {type: Boolean, required: true, default: true},
 })

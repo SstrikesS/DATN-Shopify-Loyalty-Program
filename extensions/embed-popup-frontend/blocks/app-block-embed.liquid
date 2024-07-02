@@ -1,0 +1,88 @@
+<div id="root">
+    {% liquid
+        render 'vite-tag' with 'theme.css'
+        render 'vite-tag' with 'theme.jsx'
+    %}
+</div>
+
+<script>
+    const home = `{{ request.path | json }}`
+    const template = `{{ template.name }}`
+    window.template = template;
+    window.page = `{{ page_title }}`
+
+    window.shopifyCustomer = {
+        id: "{{ customer.id }}",
+        name: "{{ customer.name }}",
+        email: "{{ customer.email }}"
+    }
+    console.log(window.shopifyCustomer );
+    window.shop = {
+        name: "{{ shop.name }}",
+        domain: "{{ shop.domain }}",
+    }
+</script>
+
+<style>
+    button[id='major-popup-button'] {
+        position: fixed;
+        bottom: 15px;
+        right: 15px;
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        border: 4px solid hsl(0, 100%, 50%);
+        padding: 0;
+        font: inherit;
+        cursor: pointer;
+        outline: inherit;
+        z-index: 100;
+        transition: transform 0.3s cubic-bezier(0.075, 0.82, 0.165, 1);
+        background: url(" {{ 'crown-image.png' | asset_img_url: '56x56' }} ") no-repeat center
+    }
+
+    div[id='major-popup-parent'] {
+        position: fixed;
+        z-index: 100;
+        display: none;
+        overflow: auto;
+        bottom: 110px;
+        right: 15px;
+        width: 360px;
+        height: 640px;
+        background: #efefef;
+        border-radius: 5px
+    }
+
+    button[id='close-popup'] {
+        position: relative;
+        font-size: 20px;
+        text-align: center;
+        height: 32px;
+        width: 32px;
+        border: none;
+        background: transparent;
+        border-radius: 5px;
+        color: aliceblue;
+        cursor: pointer;
+    }
+
+    button[id='close-popup']:hover {
+        box-shadow: 0 12px 16px 0 rgba(0, 0, 0, 0.24), 0 17px 50px 0 rgba(0, 0, 0, 0.19);
+    }
+
+    div[class='popup-page '] {
+        display: none;
+    }
+
+    div[class='popup-page active'] {
+        display: block;
+    }
+</style>
+{% schema %}
+{
+    "name": "Loyalty Rewards",
+    "target": "body",
+    "settings": []
+}
+{% endschema %}

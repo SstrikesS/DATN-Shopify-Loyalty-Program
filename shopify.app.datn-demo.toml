@@ -1,0 +1,37 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "cd191df663d0b220474f21e07ff16eb8"
+name = "DATN-DEMO"
+handle = "datn-demo"
+application_url = "https://tight-teaches-height-stronger.trycloudflare.com"
+embedded = true
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = "sstrikess-test-discount-app.myshopify.com"
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_customers,read_discounts,read_orders,read_products,read_shipping,write_customers,write_discounts"
+
+[auth]
+redirect_urls = [
+  "https://tight-teaches-height-stronger.trycloudflare.com/auth/callback",
+  "https://tight-teaches-height-stronger.trycloudflare.com/auth/shopify/callback",
+  "https://tight-teaches-height-stronger.trycloudflare.com/api/auth/callback"
+]
+
+[webhooks]
+api_version = "2024-07"
+
+  [[webhooks.subscriptions]]
+  topics = [ "app/uninstalled", "customers/create", "orders/paid" ]
+  uri = "https://derby-periods-theaters-bad.trycloudflare.com/webhooks"
+
+[app_proxy]
+url = "https://tight-teaches-height-stronger.trycloudflare.com/proxy"
+subpath = "frontend"
+prefix = "apps"
+
+[pos]
+embedded = false

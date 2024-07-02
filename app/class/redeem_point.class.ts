@@ -1,5 +1,6 @@
 import Program from "~/class/program.class";
 import type {ProgramType} from "~/class/program.class";
+import RedeemPointModel from "~/models/redeem_point";
 
 export type RewardType =
     'DiscountCodeBasicAmount'
@@ -16,13 +17,13 @@ export type CombineWithType = {
 
 export type CustomerGetsType = {
     all: boolean,
-    collection: [string] | undefined,
+    collection: string[] | undefined,
     value: number,
 }
 
 export type CustomerBuysType = {
     all: boolean,
-    collections: [string] | undefined,
+    collections: string[] | undefined,
     quantity: number | undefined,
     percentage: number | undefined,
 }
@@ -130,5 +131,29 @@ export class RedeemPoint extends Program {
 
     set pointValue(value: number) {
         this._pointValue = value;
+    }
+
+    async save(){
+        await RedeemPointModel.findOneAndUpdate({id: this.id, store_id: this.store_id},
+            {
+                id: this.id,
+                store_id: this.store_id,
+                name: this.name,
+                status: this.status,
+                limit_usage: this.limitUsage,
+                limit_reset_interval: this.limitResetInterval,
+                limit_reset_value: this.limitResetValue,
+                customer_eligibility: this.customerEligibility,
+                type: this.type,
+                icon: this.icon,
+                point_value: this.pointValue,
+                prefix: this.prefix,
+                query: this.query,
+            },{
+                returnDocument: "after",
+                new: true,
+                lean: true,
+                upsert: true,
+            })
     }
 }

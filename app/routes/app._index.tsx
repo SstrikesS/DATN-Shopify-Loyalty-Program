@@ -16,9 +16,11 @@ import {
 } from "@shopify/polaris";
 import { TitleBar, useAppBridge } from "@shopify/app-bridge-react";
 import { authenticate } from "~/shopify.server";
-import {shopQuery} from "~/utils/shopify_query";
+import {customersQuery, shopQuery} from "~/utils/shopify_query";
 import {addNewMemberStore, isMemberStore} from "~/server/server.store";
 import {addEarnPointProgram} from "~/server/server.earn_point";
+import {now} from "~/utils/helper";
+import {addCustomers} from "~/server/server.customer";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
     const {admin} = await authenticate.admin(request);
@@ -26,10 +28,30 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     const response = await admin.graphql(`
         query MyQuery {
             ${shopQuery}
+            ${customersQuery}
         }`
     );
     const {data} = await response.json();
     const checkStore = await isMemberStore(data.shop);
+
+    const customerList = data.customers.nodes.map((c: any) => {
+        return {
+            id: c.id,
+            store_id: data.shop.id,
+            reward: undefined,
+            vip_tier_index: null,
+            point_balance: 0,
+            point_earn: 0,
+            point_spent: 0,
+            last_earn_point: now(),
+            last_used_point: now(),
+            vip_point: {
+                point: 0,
+                money_spent: 0,
+            },
+            status: true,
+        }
+    })
 
     if(!checkStore) {
         await addNewMemberStore(data.shop.id).then(() => {
@@ -38,6 +60,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         await addEarnPointProgram(data.shop.id).then(() => {
             console.log(`--Default program of store ${data.shop.id} setup successfully--`)
         })
+
+        await addCustomers(customerList).then(() => {
+            console.log(`--Customer of Store add successfully--`)
+        })
+
     }
   return null;
 };

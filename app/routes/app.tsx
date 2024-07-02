@@ -6,10 +6,14 @@ import {AppProvider} from "@shopify/shopify-app-remix/react";
 import {NavMenu} from "@shopify/app-bridge-react";
 // @ts-ignore
 import polarisStyles from "@shopify/polaris/build/esm/styles.css?url";
+import {authenticate, registerWebhooks} from "~/shopify.server";
 export const links = () => [{rel: "stylesheet", href: polarisStyles}];
 
 export const loader = async ({request}: LoaderFunctionArgs) => {
+    const {session} =  await authenticate.admin(request);
 
+    await registerWebhooks({session});
+    console.log("----------Auth happened------------");
 
     return json({apiKey: process.env.SHOPIFY_API_KEY || ""});
 };

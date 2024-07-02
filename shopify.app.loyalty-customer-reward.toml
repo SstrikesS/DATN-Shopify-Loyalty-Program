@@ -1,0 +1,34 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "8bcba1b46efe7d2cf3e15bd061b1d1b9"
+name = "loyalty-customer-reward"
+handle = "loyalty-customer-reward"
+application_url = "https://married-renaissance-stories-fare.trycloudflare.com"
+embedded = true
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = "sstrikess-test-discount-app.myshopify.com"
+include_config_on_deploy = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_customers,read_discounts,read_orders,read_products,read_shipping,write_customers,write_discounts"
+
+[auth]
+redirect_urls = [
+  "https://married-renaissance-stories-fare.trycloudflare.com/auth/callback",
+  "https://married-renaissance-stories-fare.trycloudflare.com/auth/shopify/callback",
+  "https://married-renaissance-stories-fare.trycloudflare.com/api/auth/callback"
+]
+
+[webhooks]
+api_version = "2024-07"
+
+[app_proxy]
+url = "https://married-renaissance-stories-fare.trycloudflare.com"
+subpath = "frontend"
+prefix = "apps"
+
+[pos]
+embedded = false

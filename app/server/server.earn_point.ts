@@ -2,8 +2,9 @@ import EarnPointModel from "~/models/earn_point";
 import {de_listEarnPointProgram} from "~/utils/helper";
 import {ulid} from "ulid";
 import type {EarnPointType} from "~/class/earn_point.class";
+import mongoose from "mongoose";
 
-function modelsToClass (models: any) {
+function modelsToClass(models: any) {
     return {
         id: models.id,
         store_id: models.store_id,
@@ -20,22 +21,54 @@ function modelsToClass (models: any) {
 }
 
 export async function addEarnPointProgram(storeId: string) {
-    const earnPointList = de_listEarnPointProgram.map((item, index) => {
+    const earnPointList = de_listEarnPointProgram.map((item) => {
         return {id: ulid(), store_id: storeId, ...item} as unknown as EarnPointType
     })
     await EarnPointModel.insertMany(earnPointList)
 }
 
-export async function getEarnPointPrograms(storeId: string): Promise<EarnPointType[]>{
-    const mongooseList = await EarnPointModel.find({store_id: storeId}, null, {lean: true});
-    return mongooseList.map<EarnPointType>((item: any) => {
-        return modelsToClass(item);
-    });
+export async function getEarnPointPrograms(storeId: string, state = false): Promise<EarnPointType[] | null> {
+    if (state) {
+        const mongooseList = await EarnPointModel.find({store_id: storeId, status: true}, null, {lean: true});
+        if (mongooseList === null || mongoose === undefined) {
+            return null
+        } else {
+            return mongooseList.map<EarnPointType>((item: any) => {
+                return modelsToClass(item);
+            });
+        }
+
+    } else {
+        const mongooseList = await EarnPointModel.find({store_id: storeId}, null, {lean: true});
+        if (mongooseList === null || mongooseList === undefined) {
+            return null
+        } else {
+            return mongooseList.map<EarnPointType>((item: any) => {
+                return modelsToClass(item);
+            });
+        }
+    }
 }
 
-export async function getEarnPointProgram(storeId: string, id: string) {
+export async function getEarnPointProgram(storeId: string, id: string): Promise<EarnPointType | null> {
     const mongooseData = await EarnPointModel.findOne({store_id: storeId, id: id}, null, {lean: true});
+    if (mongooseData === null || mongooseData === undefined) {
+        return null;
+    }
     return modelsToClass(mongooseData);
+}
+
+export async function getEarnPointProgramByType(storeId: string, type: string): Promise<EarnPointType | null> {
+    const regex = /^place_an_order\/.*/;
+    const mongooseData = await EarnPointModel.findOne({store_id: storeId, type: regex}, null, {lean: true});
+    if (mongooseData === null || mongooseData === undefined) {
+        return null;
+    }
+    return modelsToClass(mongooseData);
+}
+
+export async function getSpecificCustomerEarnPointProgram(storeId: string, customerId: string): Promise<EarnPointType[] | null> {
+    return await getEarnPointPrograms(storeId, true);
 }
 
 // export async function createEarnPoint(){

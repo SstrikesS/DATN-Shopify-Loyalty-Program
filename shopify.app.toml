@@ -3,7 +3,7 @@
 client_id = "c0237746d5feff0054b309baee1f1f36"
 name = "thanhnt-discount-app"
 handle = "thanhnt-discount-app"
-application_url = "https://mechanics-schema-treo-participant.trycloudflare.com"
+application_url = "https://evanescence-planned-stores-edmonton.trycloudflare.com"
 embedded = true
 
 [build]
@@ -17,9 +17,9 @@ scopes = "read_customers,read_discounts,read_orders,read_products,read_shipping,
 
 [auth]
 redirect_urls = [
-  "https://mechanics-schema-treo-participant.trycloudflare.com/auth/callback",
-  "https://mechanics-schema-treo-participant.trycloudflare.com/auth/shopify/callback",
-  "https://mechanics-schema-treo-participant.trycloudflare.com/api/auth/callback"
+  "https://evanescence-planned-stores-edmonton.trycloudflare.com/auth/callback",
+  "https://evanescence-planned-stores-edmonton.trycloudflare.com/auth/shopify/callback",
+  "https://evanescence-planned-stores-edmonton.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
@@ -30,8 +30,8 @@ api_version = "2024-04"
   uri = "/webhooks"
 
 [app_proxy]
-url = "https://mechanics-schema-treo-participant.trycloudflare.com"
-subpath = "loyalty-customer-reward"
+url = "https://evanescence-planned-stores-edmonton.trycloudflare.com/proxy"
+subpath = "frontend"
 prefix = "apps"
 
 [pos]

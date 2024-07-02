@@ -462,7 +462,7 @@ export default function PointProgram() {
                                                         return (
                                                             <ResourceItem
                                                                 id={id}
-                                                                url={`../reward/${id}?type=${type}`}
+                                                                url={`../program/${type}/${id}`}
                                                                 media={media}
                                                                 accessibilityLabel={`View details for ${name}`}
                                                             >
@@ -480,7 +480,8 @@ export default function PointProgram() {
                                                                         <div style={{
                                                                             float: "right",
                                                                             width: '20%'
-                                                                        }}>{status}</div>
+                                                                        }}>{status ? <Badge tone="success">Active</Badge> :
+                                                                            <Badge tone="critical">Inactive</Badge>}</div>
                                                                     </InlineStack>
                                                                 </div>
                                                             </ResourceItem>

@@ -28,8 +28,17 @@ import {collectionQuery, shopQuery} from "~/utils/shopify_query";
 import {getStore} from "~/server/server.store";
 import Store from "~/class/store.class";
 import {getRedeemPointProgram} from "~/server/server.redeem_point";
-import type {discountCodeBasicCreateQueryType} from "~/class/redeem_point.class";
+import type {
+    CombineWithType,
+    CustomerGetsType,
+    discountCodeBasicCreateQueryType,
+    RedeemPointType
+} from "~/class/redeem_point.class";
+import {
+    RedeemPoint
+} from "~/class/redeem_point.class";
 import type {SectionDescriptor} from "@shopify/polaris/build/ts/src/types";
+import {ulid} from "ulid";
 
 export async function loader({request, params}: LoaderFunctionArgs) {
     const {admin} = await authenticate.admin(request);
@@ -44,9 +53,9 @@ export async function loader({request, params}: LoaderFunctionArgs) {
     const collections = data.collections.edges.map((edge: any) => {
         return {
             value: edge.node.id,
-            label: edge.node.title
-        }
-    })
+            label: edge.node.title,
+        };
+    }) as { value: string, label: string }[];
     if (store instanceof Store) {
         const type = "DiscountCodeBasicAmount";
         const icon = 'https://cdn-icons-png.flaticon.com/32/1611/1611179.png';
@@ -85,6 +94,7 @@ export async function loader({request, params}: LoaderFunctionArgs) {
 
 export async function action({request}: ActionFunctionArgs) {
     const {admin} = await authenticate.admin(request);
+    const method = request.method;
     const response = await admin.graphql(`
         query MyQuery {
             ${shopQuery}
@@ -94,13 +104,94 @@ export async function action({request}: ActionFunctionArgs) {
     const {data} = await response.json();
     const store = await getStore(data.shop);
     if (store instanceof Store) {
+        const type = "DiscountCodeBasicAmount";
+        const icon = 'https://cdn-icons-png.flaticon.com/32/1611/1611179.png';
         const formData = await request.formData();
-        // const redeemPointData = getRedeemPointProgram(store.id, id: formData.get('id') as string);
+        if (formData.get('id') !== null && method === 'PUT') {
+            const redeemPointData = await getRedeemPointProgram(store.id, formData.get('id') as string);
+            const query = redeemPointData.query as discountCodeBasicCreateQueryType
+            let updateRedeemPointData = {
+                id: redeemPointData.id,
+                store_id: store.id,
+                name: formData.get('name') !== null ? formData.get('name') as string : redeemPointData.name,
+                status: formData.get('status') !== null ? formData.get('status') as string === 'true' : redeemPointData.status,
+                limitUsage: -1,
+                limitResetInterval: 'day',
+                limitResetValue: 1,
+                customerEligibility: 'null',
+                pointValue: formData.get('pointValue')!== null ?parseInt(formData.get('pointValue') as string) : redeemPointData.pointValue,
+                icon: icon,
+                type: type,
+                prefix: formData.get('prefix') !== null ? formData.get('prefix') as string : redeemPointData.prefix ? redeemPointData.prefix as string : undefined,
+                query: {
+                    combinesWith: {
+                        shippingDiscounts: formData.get('combinesWithShippingDiscounts') === 'true',
+                        productDiscounts: formData.get('combinesWithProductDiscounts') === 'true',
+                        orderDiscounts: formData.get('combinesWithOrderDiscounts') === 'true',
+                    } as CombineWithType,
+                    customerGets: {
+                        all: formData.get('customerGetsAll') === 'true',
+                        collection: formData.get('collections') !== null ? JSON.parse(formData.get('collections') as string) as string[] : query.customerGets.collection ? query.customerGets.collection : undefined ,
+                        value: parseInt(formData.get('value') as string),
+                    } as CustomerGetsType,
+                    minimumQuantity: formData.get('minimumQuantity') !== null ? parseInt(formData.get('minimumQuantity') as string) : query.minimumQuantity ? query.minimumQuantity : undefined,
+                    minimumPercentage: formData.get('minimumPercentage') !== null ? parseInt(formData.get('minimumPercentage') as string) : query.minimumPercentage? query.minimumPercentage : undefined,
+                    startsAt: new Date(formData.get('startsAt') as string),
+                    endsAt: formData.get('endsAt') !== 'null' ? new Date(formData.get('endsAt') as string) : undefined,
+                } as discountCodeBasicCreateQueryType
+            } as RedeemPointType;
+            const redeemPointProgram = new RedeemPoint(updateRedeemPointData);
+            await redeemPointProgram.save();
+
+            return json({
+                success: true,
+                message: 'Redeem Point Program is updated successfully',
+            })
+        } else {
+            let newRedeemPoint = {
+                id: ulid(),
+                store_id: store.id,
+                name: formData.get('name') as string,
+                status: true,
+                limitUsage: -1,
+                limitResetInterval: 'day',
+                limitResetValue: 1,
+                customerEligibility: 'null',
+                pointValue: parseInt(formData.get('pointValue') as string),
+                icon: icon,
+                type: type,
+                prefix: formData.get('prefix') !== null ? formData.get('prefix') as string : undefined,
+                query: {
+                    combinesWith: {
+                        shippingDiscounts: formData.get('combinesWithShippingDiscounts') === 'true',
+                        productDiscounts: formData.get('combinesWithProductDiscounts') === 'true',
+                        orderDiscounts: formData.get('combinesWithOrderDiscounts') === 'true',
+                    } as CombineWithType,
+                    customerGets: {
+                        all: formData.get('customerGetsAll') === 'true',
+                        collection: formData.get('collections') !== null ? JSON.parse(formData.get('collections') as string) as string[] : undefined,
+                        value: parseInt(formData.get('value') as string),
+                    } as CustomerGetsType,
+                    minimumQuantity: formData.get('minimumQuantity') !== null ? parseInt(formData.get('minimumQuantity') as string) : undefined,
+                    minimumPercentage: formData.get('minimumPercentage') !== null ? parseInt(formData.get('minimumPercentage') as string) : undefined,
+                    startsAt: new Date(formData.get('startsAt') as string),
+                    endsAt: formData.get('endsAt') !== null ? new Date(formData.get('endsAt') as string) : undefined,
+                } as discountCodeBasicCreateQueryType
+            } as RedeemPointType;
+            const redeemPointProgram = new RedeemPoint(newRedeemPoint);
+            await redeemPointProgram.save();
+
+            return json({
+                success: true,
+                message: 'Redeem Point Program is created successfully',
+            })
+        }
+    } else {
+        return json({
+            success: false,
+            message: 'Store not found',
+        })
     }
-    return json({
-        success: true,
-        message: '',
-    })
 }
 
 export default function NewReward() {
@@ -116,7 +207,7 @@ export default function NewReward() {
     const [pointCostError, setPointCostError] = useState<string | undefined>(undefined);
     const [discountValue, setDiscountValue] = useState(data?.redeemPointData ? `${data?.query.customerGets.value}` : "5");
     const [discountValueError, setDiscountValueError] = useState<string | undefined>(undefined);
-    const [isAddPrefixCode, setsIsAddPrefixCode] = useState(data?.redeemPointData ? !!data?.redeemPointData.prefix : true);
+    const [isAddPrefixCode, setsIsAddPrefixCode] = useState(data?.redeemPointData ? !!data?.redeemPointData.prefix : false);
     const [prefixCode, setPrefixCode] = useState(data?.redeemPointData?.prefix ? data?.redeemPointData?.prefix : "");
     const [combinationCheckbox, setCombinationCheckbox] = useState(data?.redeemPointData ? data?.query.combinesWith : {
         shippingDiscounts: false,
@@ -136,22 +227,24 @@ export default function NewReward() {
     });
     const [{month, year}, setDate] = useState({month: startOfToday().getMonth(), year: startOfToday().getFullYear()})
     const [programApply, setProgramApply] = useState(data?.redeemPointData ? data?.query.customerGets.all === true ? 'entire_order' : 'specific_collections' : 'entire_order');
-    const [selectedCollection, setSelectedCollection] = useState<[string]>(['']);
+    const [selectedCollection, setSelectedCollection] = useState<string[] | undefined>(data?.redeemPointData ? data?.query.customerGets.collection ? data.query.customerGets.collection : undefined : undefined);
     const [programStatus, setProgramStatus] = useState(data?.redeemPointData ? data?.redeemPointData?.status ? 'active' : 'disable' : 'disable');
-    const [collectionOptions, setCollectionOptions] = useState<{ value: string, label: string }[]>([]);
+    const [collectionOptions, setCollectionOptions] = useState<{ value: string, label: string }[]>(data?.collections as { value: string, label: string }[]);
     const [inputCollectionValue, setInputCollectionValue] = useState('');
-    const [collectOption] = useState(data?.collections);
-    const [isCollectionLoading] = useState(false);
-
 
     const handleSubmit = async () => {
-        if (nameError || pointCostError || discountValueError || minimumRequireError || data !== null) {
-            shopify.toast.show("Invalid Input!");
+        if (nameError || pointCostError || discountValueError || minimumRequireError || data === null) {
+            if (programApply === 'specific_collections' && (selectedCollection === undefined || selectedCollection?.length === 0)) {
+                shopify.toast.show("Collections can not be empty");
+            } else {
+                console.log(nameError, pointCostError, discountValueError, minimumRequireError)
+                shopify.toast.show("Invalid Input!");
+            }
             setIsSubmitting(false);
-        } else{
+        } else {
             const formData = new FormData();
             formData.append('pointValue', pointCost);
-            if(isAddPrefixCode) {
+            if (isAddPrefixCode) {
                 formData.append('prefix', prefixCode);
             }
             formData.append('name', programName);
@@ -160,20 +253,28 @@ export default function NewReward() {
             formData.append('combinesWithOrderDiscounts', `${combinationCheckbox.orderDiscounts}`);
 
             formData.append('customerGetsAll', `${programApply === 'entire_order'}`);
-            if(programApply === 'specific_collections'){
+            if (programApply === 'specific_collections') {
                 formData.append('collections', JSON.stringify(selectedCollection));
             }
             formData.append('value', discountValue);
-            if(isSetMinimumRequirement === 'minimum_quantity') {
+            if (isSetMinimumRequirement === 'minimum_quantity') {
                 formData.append('minimumQuantity', minimumRequire)
-            } else if(isSetMinimumRequirement === 'minimum_purchase') {
+            } else if (isSetMinimumRequirement === 'minimum_purchase') {
                 formData.append('minimumPercentage', minimumRequire)
             }
             formData.append('startsAt', selectedDate.start.toISOString());
-            if(isRewardExpiry === 'set_expired') {
+            if (isRewardExpiry === 'set_expired') {
                 formData.append('endsAt', selectedDate.end.toISOString());
+            } else {
+                formData.append('endsAt', 'null');
             }
-            submit(formData, {replace: true, method: 'POST', encType: "multipart/form-data"})
+            if(data?.redeemPointData) {
+                formData.append('id', data?.redeemPointData.id);
+                submit(formData, {replace: true, method: 'PUT', encType: "multipart/form-data"})
+            }else {
+                submit(formData, {replace: true, method: 'POST', encType: "multipart/form-data"})
+            }
+
         }
     }
 
@@ -181,17 +282,17 @@ export default function NewReward() {
             setInputCollectionValue(value);
 
             if (value === '') {
-                setCollectionOptions(collectOption);
+                setCollectionOptions(data?.collections as { value: string, label: string }[]);
                 return;
             }
 
             const filterRegex = new RegExp(value, 'i');
-            const resultOptions = collectOption.filter((collectionOptions: any) =>
+            const resultOptions = data?.collections.filter((collectionOptions: any) =>
                 collectionOptions.title.match(filterRegex),
-            );
+            ) as { value: string, label: string }[];
             setCollectionOptions(resultOptions);
         },
-        [collectOption],
+        [data?.collections],
     );
 
     const textField = (
@@ -256,6 +357,14 @@ export default function NewReward() {
     }, [],);
     const handleIsRewardExpiryChange = useCallback((newValue: boolean, id: string) => {
         setIsRewardExpiry(id);
+        if(id === 'no_expired') {
+            setSelectedDate((previous) => {
+                return {
+                    start: previous.start,
+                    end: previous.start,
+                }
+            })
+        }
         setIsDataChange(true);
     }, [],);
     const handleMonthChange = useCallback(
@@ -267,6 +376,9 @@ export default function NewReward() {
     );
     const handleProgramApplyChange = useCallback((newValue: boolean, id: string) => {
         setProgramApply(id);
+        if(id === 'entire_order') {
+            setSelectedCollection(undefined);
+        }
         setIsDataChange(true);
     }, [],);
 
@@ -282,19 +394,21 @@ export default function NewReward() {
     );
 
     const removeFromSelectedCollection = (indexToRemove: number) => {
-        const updatedCollection = [...selectedCollection];
-        updatedCollection.splice(indexToRemove, 1);
-        setSelectedCollection(updatedCollection as [string]);
+        if (selectedCollection) {
+            const updatedCollection = [...selectedCollection];
+            updatedCollection.splice(indexToRemove, 1);
+            setSelectedCollection(updatedCollection as string[]);
+        }
     };
 
     useEffect(() => {
         if (actionData) {
             if (actionData.success === true) {
                 if (data?.redeemPointData !== null) {
-                    shopify.toast.show('Update vip tier successfully');
+                    shopify.toast.show(actionData.message as string);
                     setIsSubmitting(false);
                 } else {
-                    shopify.toast.show('Create new tier successfully');
+                    shopify.toast.show(actionData.message as string);
                     setTimeout(() => {
                         navigate('../program/points');
                     }, 500);
@@ -308,7 +422,7 @@ export default function NewReward() {
 
     useEffect(() => {
         if (programName.length === 0) {
-            setNameError('Program Name cannot be empty')
+            setNameError('Program Name can not be empty')
         } else {
             setNameError(undefined);
         }
@@ -345,8 +459,18 @@ export default function NewReward() {
             } else {
                 setMinimumRequireError(undefined);
             }
+        } else {
+            setMinimumRequireError(undefined);
         }
     }, [minimumRequire, isSetMinimumRequirement])
+
+    // useEffect(() => {
+    //     if(data?.redeemPointData && data?.query.customerGets.collection !== undefined && data?.query.customerGets.collection?.length > 0) {
+    //         const collections = data.collections.filter(c => data?.query.customerGets.collection?.includes(c.value));
+    //         console.log(collections);
+    //     }
+    // }, []);
+
     return (
         <div style={{
             marginBottom: "20px"
@@ -444,16 +568,15 @@ export default function NewReward() {
                                                     <Autocomplete
                                                         allowMultiple
                                                         options={collectionOptions as unknown as SectionDescriptor[]}
-                                                        selected={selectedCollection}
+                                                        selected={selectedCollection ? selectedCollection : []}
                                                         textField={textField}
                                                         onSelect={updateSelection}
-                                                        loading={isCollectionLoading}
                                                     >
                                                     </Autocomplete>
                                                 ) : null
                                                 }
                                                 <div>
-                                                    {selectedCollection.map((selectedItem, index) => {
+                                                    {selectedCollection?.map((selectedItem, index) => {
                                                         const matchedOption = collectionOptions.find((collectionOptions) => {
                                                             return collectionOptions.value.match(selectedItem);
                                                         });
@@ -660,7 +783,7 @@ export default function NewReward() {
                                             <List>
                                                 <List.Item><strong>{parseFloat(discountValue).toFixed(2)}</strong>$ off
                                                     apply
-                                                    to <strong>{programApply === 'specific_collections' ? selectedCollection.length : null} {convertSnakeString(programApply)} </strong>
+                                                    to <strong>{programApply === 'specific_collections' ? selectedCollection?.length : null} {convertSnakeString(programApply)} </strong>
                                                 </List.Item>
 
                                                 <List.Item>
@@ -692,7 +815,7 @@ export default function NewReward() {
                                             </List>
                                         </BlockStack>
                                     </Card>
-                                    {data?.redeemPointData ? (
+                                    {data?.redeemPointData !== null ? (
                                         <Card>
                                             <BlockStack gap="500">
                                                 <Text variant="headingMd" as="h6">
