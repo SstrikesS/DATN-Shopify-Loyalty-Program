@@ -27,7 +27,7 @@ export async function ProgramHandler(store: Store, customer: Customer, order_sub
 
                     } else {
 
-                        console.log(`--Customer ${customer.id} not meet eligibility of program ${earnPointProgram.id}--`)
+                        console.log(`--Customer ${customer.id} did not meet the eligibility of the program ${earnPointProgram.id}--`)
                         return false;
                     }
                 }
@@ -41,7 +41,7 @@ export async function ProgramHandler(store: Store, customer: Customer, order_sub
             }
         } else {
 
-            console.log(`--Customer ${customer.id} usage of program ${earnPointProgram.id} limit reached--`)
+            console.log(`--Customer ${customer.id} usage reached the limit of the program ${earnPointProgram.id}--`)
             return false;
         }
     } else {

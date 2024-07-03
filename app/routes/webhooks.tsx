@@ -1,12 +1,13 @@
 import type {ActionFunctionArgs} from "@remix-run/node";
 import {authenticate} from "~/shopify.server";
 import db from "../db.server";
-import {customerQuery, shopQuery} from "~/utils/shopify_query";
+import {customerQuery, rewardMetafieldCreate, shopQuery} from "~/utils/shopify_query";
 import {getStore} from "~/server/server.store";
 import {getCustomer} from "~/server/server.customer";
 import Store from "~/class/store.class";
 import Customer from "~/class/customer";
 import {ProgramHandler} from "~/server/server.webhook.order_paid";
+import {checkRewardUsage} from "~/server/server.reward";
 
 export const action = async ({request}: ActionFunctionArgs) => {
     const {topic, shop, session, admin, payload} = await authenticate.webhook(request);
@@ -39,6 +40,20 @@ export const action = async ({request}: ActionFunctionArgs) => {
                 const customer = await getCustomer(data.customer, data.shop.id);
                 if (store instanceof Store && customer instanceof Customer) {
                     if (await ProgramHandler(store, customer, parseFloat(payload.subtotal_price))) {
+                        const rewards = await checkRewardUsage(payload.discount_codes, data.customer)
+                        if(rewards) {
+                            const response = await admin.graphql(`
+                            mutation MyMutation {
+                                ${rewardMetafieldCreate(customer.id, rewards)}
+                            }`
+                            );
+
+                            const responseBody = await response.json();
+                            if(responseBody.data.metafieldsSet) {
+                                console.log(`--Reward of customer ${customer.id} is updated successfully--`);
+                            }
+                        }
+
                         console.log(`--Webhook ORDERS_PAID executed successfully--`);
                     } else {
                         console.log(`--Webhook ORDERS_PAID executed with ERROR--`);

@@ -63,7 +63,7 @@ export async function loader({request, params}: LoaderFunctionArgs) {
         let query = {} as discountCodeBasicCreateQueryType
         if (id && id !== "new") {
             const redeemPointData = await getRedeemPointProgram(store.id, id);
-            query = redeemPointData.query as discountCodeBasicCreateQueryType
+            query = redeemPointData?.query as discountCodeBasicCreateQueryType
 
             return json({
                 data: {
@@ -71,8 +71,8 @@ export async function loader({request, params}: LoaderFunctionArgs) {
                     collections: collections,
                     redeemPointData: redeemPointData,
                     query: query,
-                    type: redeemPointData.type,
-                    icon: redeemPointData.icon,
+                    type: redeemPointData?.type,
+                    icon: redeemPointData?.icon,
                 }
             })
         } else {
@@ -109,20 +109,20 @@ export async function action({request}: ActionFunctionArgs) {
         const formData = await request.formData();
         if (formData.get('id') !== null && method === 'PUT') {
             const redeemPointData = await getRedeemPointProgram(store.id, formData.get('id') as string);
-            const query = redeemPointData.query as discountCodeBasicCreateQueryType
+            const query = redeemPointData?.query as discountCodeBasicCreateQueryType
             let updateRedeemPointData = {
-                id: redeemPointData.id,
+                id: redeemPointData?.id,
                 store_id: store.id,
-                name: formData.get('name') !== null ? formData.get('name') as string : redeemPointData.name,
-                status: formData.get('status') !== null ? formData.get('status') as string === 'true' : redeemPointData.status,
+                name: formData.get('name') !== null ? formData.get('name') as string : redeemPointData?.name,
+                status: formData.get('status') !== null ? formData.get('status') as string === 'true' : redeemPointData?.status,
                 limitUsage: -1,
                 limitResetInterval: 'day',
                 limitResetValue: 1,
                 customerEligibility: 'null',
-                pointValue: formData.get('pointValue')!== null ?parseInt(formData.get('pointValue') as string) : redeemPointData.pointValue,
+                pointValue: formData.get('pointValue')!== null ?parseInt(formData.get('pointValue') as string) : redeemPointData?.pointValue,
                 icon: icon,
                 type: type,
-                prefix: formData.get('prefix') !== null ? formData.get('prefix') as string : redeemPointData.prefix ? redeemPointData.prefix as string : undefined,
+                prefix: formData.get('prefix') !== null ? formData.get('prefix') as string : redeemPointData?.prefix ? redeemPointData?.prefix as string : undefined,
                 query: {
                     combinesWith: {
                         shippingDiscounts: formData.get('combinesWithShippingDiscounts') === 'true',
@@ -134,10 +134,10 @@ export async function action({request}: ActionFunctionArgs) {
                         collection: formData.get('collections') !== null ? JSON.parse(formData.get('collections') as string) as string[] : query.customerGets.collection ? query.customerGets.collection : undefined ,
                         value: parseInt(formData.get('value') as string),
                     } as CustomerGetsType,
-                    minimumQuantity: formData.get('minimumQuantity') !== null ? parseInt(formData.get('minimumQuantity') as string) : query.minimumQuantity ? query.minimumQuantity : undefined,
-                    minimumPercentage: formData.get('minimumPercentage') !== null ? parseInt(formData.get('minimumPercentage') as string) : query.minimumPercentage? query.minimumPercentage : undefined,
+                    minimumQuantity: formData.get('minimumQuantity') !== null ? parseInt(formData.get('minimumQuantity') as string) : null,
+                    minimumPercentage: formData.get('minimumPercentage') !== null ? parseInt(formData.get('minimumPercentage') as string) : null,
                     startsAt: new Date(formData.get('startsAt') as string),
-                    endsAt: formData.get('endsAt') !== 'null' ? new Date(formData.get('endsAt') as string) : undefined,
+                    endsAt: formData.get('endsAt') !== 'null' ? new Date(formData.get('endsAt') as string) : null,
                 } as discountCodeBasicCreateQueryType
             } as RedeemPointType;
             const redeemPointProgram = new RedeemPoint(updateRedeemPointData);
@@ -172,8 +172,8 @@ export async function action({request}: ActionFunctionArgs) {
                         collection: formData.get('collections') !== null ? JSON.parse(formData.get('collections') as string) as string[] : undefined,
                         value: parseInt(formData.get('value') as string),
                     } as CustomerGetsType,
-                    minimumQuantity: formData.get('minimumQuantity') !== null ? parseInt(formData.get('minimumQuantity') as string) : undefined,
-                    minimumPercentage: formData.get('minimumPercentage') !== null ? parseInt(formData.get('minimumPercentage') as string) : undefined,
+                    minimumQuantity: formData.get('minimumQuantity') !== null ? parseInt(formData.get('minimumQuantity') as string) : null,
+                    minimumPercentage: formData.get('minimumPercentage') !== null ? parseInt(formData.get('minimumPercentage') as string) : null,
                     startsAt: new Date(formData.get('startsAt') as string),
                     endsAt: formData.get('endsAt') !== null ? new Date(formData.get('endsAt') as string) : undefined,
                 } as discountCodeBasicCreateQueryType

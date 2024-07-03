@@ -42,7 +42,7 @@ export const createReward = async (customerId, id) => {
 
 export const updateCustomer = async (customerId,dob) => {
     try {
-        const response = await fetch(`${apiLink}/proxy/customer?customer_id=${customerId}&dob=${dob}`, {
+        const response = await fetch(`${apiLink}/proxy/customer?dob=${dob}`, {
             method: "PUT",
             cache: 'no-cache',
             headers: {

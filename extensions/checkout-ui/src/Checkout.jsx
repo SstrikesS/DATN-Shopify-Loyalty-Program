@@ -43,13 +43,16 @@ function Extension() {
             const today = new Date().valueOf();
             const array1 = JSON.parse(appMetafields[0].metafield.value);
             const array2 = array1.filter((item) => {
-                const endsAt = item.expiry_at ? parseISO(item.expiry_at).valueOf() : 0;
+                const endsAt = item.endAt ? parseISO(item.endAt).valueOf() : null;
+                const startAt = parseISO(item.startAt).valueOf();
+                if(endsAt === null) {
+                    return (today > startAt) && item.status === true;
+                } else {
+                    return (endsAt > today && today > startAt) && item.used === true
+                }
 
-                return (endsAt > today || endsAt === 0) && item.used === false
             })
-            console.log(array2);
             setReward(array2);
-            // console.log(JSON.parse(appMetafields[0].metafield.value));
         }
         setIsFetching(false);
     }, [appMetafields]);

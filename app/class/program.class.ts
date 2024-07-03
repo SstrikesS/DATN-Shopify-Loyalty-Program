@@ -91,17 +91,13 @@ export default class Program {
     async checkLimitUsage(customer_id: string) {
         const customerUsage = await getCustomerLimit(this.store_id, customer_id, this.id);
         if (customerUsage === null) {
-
             if (this.limitUsage !== -1) {
                 updateCustomerLimit(this.store_id, customer_id, this.id, this.limitUsage - 1).then((r) =>
                     console.log(`--Update limit usage of program ${this.id} and customer ${customer_id}--\n--Usage left: ${this.limitUsage - 1}`)
                 );
-
-                return true;
-            } else {
-
-                return false;
             }
+
+            return true;
         } else if (customerUsage > 0) {
             updateCustomerLimit(this.store_id, customer_id, this.id, customerUsage - 1).then((r) =>
                 console.log(`--Update limit usage of program ${this.id} and customer ${customer_id}--\n--Usage left: ${customerUsage - 1}`)

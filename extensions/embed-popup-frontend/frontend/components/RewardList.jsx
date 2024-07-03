@@ -49,13 +49,13 @@ export default function RewardList({resource, page, setPage}) {
                                             <p style={{
                                                 fontWeight: "bold",
                                                 fontSize: "15px",
-                                                textAlign: "center",
+                                                textAlign: "left",
                                                 display: 'flex',
                                                 margin: '0'
                                             }}>{item.title}</p>
                                             <p style={{
                                                 fontSize: "12px",
-                                                textAlign: "center",
+                                                textAlign: "left",
                                                 display: 'flex',
                                                 margin: '0'
                                             }}>

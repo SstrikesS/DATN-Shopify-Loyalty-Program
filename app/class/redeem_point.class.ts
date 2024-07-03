@@ -1,6 +1,8 @@
 import Program from "~/class/program.class";
 import type {ProgramType} from "~/class/program.class";
 import RedeemPointModel from "~/models/redeem_point";
+import {discountCodeBasicCreate} from "~/utils/shopify_query";
+import {generateRandomString} from "~/utils/helper";
 
 export type RewardType =
     'DiscountCodeBasicAmount'
@@ -38,10 +40,10 @@ export type giftCardCreateQueryType = {
 export type discountCodeBasicCreateQueryType = {
     combinesWith: CombineWithType,
     customerGets: CustomerGetsType,
-    minimumQuantity: number | undefined,
-    minimumPercentage: number | undefined,
+    minimumQuantity: number | null | undefined,
+    minimumPercentage: number | null | undefined,
     startsAt: Date,
-    endsAt: Date | undefined,
+    endsAt: Date | undefined | null,
 }
 
 export type discountCodeBxgyCreate = {
@@ -50,16 +52,16 @@ export type discountCodeBxgyCreate = {
     customerGets: CustomerGetsType,
     customerBuys: CustomerBuysType,
     startsAt: Date,
-    endsAt: Date | undefined,
+    endsAt: Date | undefined | null,
 }
 
 export type discountCodeFreeShippingCreate = {
     combinesWith: CombineWithType,
     maximumShippingPrice: number | undefined,
-    minimumQuantity: number | undefined,
-    minimumPercentage: number | undefined,
+    minimumQuantity: number | null | undefined,
+    minimumPercentage: number | null | undefined,
     startsAt: Date,
-    endsAt: Date | undefined,
+    endsAt: Date | undefined | null,
 }
 
 export type QueryType =
@@ -131,6 +133,32 @@ export class RedeemPoint extends Program {
 
     set pointValue(value: number) {
         this._pointValue = value;
+    }
+
+
+     queryCreate(customer_id: string) {
+        let query;
+        switch (this.type) {
+            case "DiscountCodeBasicAmount":
+            case "DiscountCodeBasicPercentage":
+                query = this.query as discountCodeBasicCreateQueryType;
+                return discountCodeBasicCreate(query,  generateRandomString(12, this.prefix), this.name, customer_id, this.type);
+            case "DiscountCodeBxgy":
+                query = this.query as discountCodeBxgyCreate;
+                console.log(query)
+                break;
+            case "DiscountCodeFreeShipping":
+                query = this.query as discountCodeFreeShippingCreate;
+                console.log(query)
+                break;
+            case "GiftCard":
+                query = this.query as giftCardCreateQueryType;
+                console.log(query)
+                break;
+            default:
+                break;
+        }
+
     }
 
     async save(){

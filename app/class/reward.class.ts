@@ -1,17 +1,20 @@
+import RewardModel from "~/models/reward";
+
 export type RewardDataType = {
     id: string,
-    program_id: string,
-    customer_id: string,
+    programId: string,
+    customerId: string,
     code: string,
     type: string,
     title: string,
     value: number | undefined,
-    endAt: Date | undefined,
+    endAt: Date | undefined | null,
+    startAt: Date,
     status: boolean,
 }
 
 
-export class Reward {
+export class RewardClass {
     private readonly _id: string;
     private readonly _programId: string;
     private readonly _customerId: string;
@@ -19,18 +22,20 @@ export class Reward {
     private readonly _type: string;
     private readonly _title: string;
     private readonly _value: number | undefined;
-    private readonly _endAt: Date | undefined;
+    private readonly _endAt: Date | undefined | null;
+    private readonly _startAt: Date;
     private _status: boolean;
 
     constructor(data: RewardDataType) {
         this._id = data.id;
-        this._programId = data.program_id;
-        this._customerId = data.customer_id;
+        this._programId = data.programId;
+        this._customerId = data.customerId;
         this._code = data.code;
         this._type = data.type;
         this._title = data.title;
         this._value = data.value;
         this._endAt = data.endAt;
+        this._startAt = data.startAt;
         this._status = data.status;
     }
 
@@ -63,8 +68,12 @@ export class Reward {
         return this._value;
     }
 
-    get endAt(): Date | undefined {
+    get endAt(): Date | undefined | null{
         return this._endAt;
+    }
+
+    get startAt(): Date {
+        return this._startAt;
     }
 
     get status(): boolean {
@@ -73,5 +82,23 @@ export class Reward {
 
     set status(value: boolean) {
         this._status = value;
+    }
+
+    async save(){
+        await RewardModel.findOneAndUpdate({
+            id: this.id,
+            program_id: this.programId,
+            customer_id: this.customerId,
+        }, {
+            id: this.id,
+            program_id: this.programId,
+            customer_id: this.customerId,
+            status: this.status,
+        }, {
+            returnDocument: "after",
+            new: true,
+            lean: true,
+            upsert: true,
+        })
     }
 }

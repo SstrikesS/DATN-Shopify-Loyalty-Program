@@ -18,9 +18,9 @@ export default function MainPage({resource, page, setPage}) {
         setPage('redeem-point');
     }
 
-    const navigateToReferral = () => {
-        setPage('referral-page');
-    }
+    // const navigateToReferral = () => {
+    //     setPage('referral-page');
+    // }
 
     const navigateToUserActivity = () => {
         // setPage('user-activity');
@@ -51,7 +51,7 @@ export default function MainPage({resource, page, setPage}) {
                                 }}>
                                     Your rewards
                                 </p>
-                                {resource.reward !== null && resource.rewards.length > 0 ? (
+                                {resource.rewards && resource.rewards.length > 0 ? (
                                     <p style={{
                                         fontWeight: "light",
                                         fontSize: "12px",

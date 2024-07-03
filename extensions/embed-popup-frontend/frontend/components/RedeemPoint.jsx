@@ -20,6 +20,10 @@ export default function RedeemPoint({resource, setResource, page, setPage}) {
             });
             setResource((previous) => {
                 previous.customer._pointBalance = response.data.customer._pointBalance;
+                if(previous.rewards === null) {
+                    previous.rewards = [];
+                }
+
                 previous.rewards.push(response.data.reward);
                 return previous;
             })

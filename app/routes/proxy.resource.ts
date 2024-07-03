@@ -26,7 +26,7 @@ export async function loader({request}: LoaderFunctionArgs) {
         const store = await getStore(data.shop);
         const customer = await getCustomer(data.customer, data.shop.id);
             if (store instanceof Store && customer instanceof Customer) {
-            const rewards = await getCustomerRewards(data.customer.id);
+            const rewards = await getCustomerRewards(data.customer);
             const redeemPrograms = await getSpecificCustomerRedeemPointProgram(data.shop.id, data.customer.id);
             const earnPointPrograms = await getSpecificCustomerEarnPointProgram(data.shop.id, data.customer.id);
             const vipTiers = await getSpecificCustomerVipTier(data.shop.id, customer.vipTierId);

@@ -1,30 +1,54 @@
-import RewardModel from "~/models/reward";
-import type {RewardDataType} from "~/class/reward";
-function modelsToClass(model: any) {
-    return {
-        id: model.id,
-        program_id: model.program_id,
-        customer_id: model.customer_id,
-        code: model.code,
-        type: model.type,
-        title: model.title,
-        value: model.value,
-        endAt: model.end_at,
-        status: model.status,
-    } as RewardDataType;
-}
+import type { RewardDataType} from "~/class/reward.class";
+import {RewardClass} from "~/class/reward.class";
 
-
-export async function getCustomerRewards(customerId: string) {
-    if(customerId != '') {
-        const rewards = await RewardModel.find({customer_id: customerId}, null, {lean: true});
-        if(rewards === null || rewards === undefined) {
-            return null;
-        }
-        return rewards.map((r) => {
-            return modelsToClass(r)
-        }) as RewardDataType[]
+export async function getCustomerRewards(customerData: any) {
+    if (customerData?.metafield?.value) {
+        const data = JSON.parse(customerData?.metafield?.value as string) as RewardDataType[];
+        const now = new Date();
+        return data.filter(item => {
+            const startAtDate = new Date(item.startAt);
+            const endAtDate = item.endAt ? new Date(item.endAt) : null;
+            if (endAtDate === null) {
+                return now > startAtDate && item.status;
+            }
+            return now > startAtDate && now > endAtDate && item.status;
+        })
     } else {
         return null;
     }
 }
+
+export async function getAllCustomerReward(customerData: any) {
+    if (customerData?.metafield?.value) {
+        return JSON.parse(customerData?.metafield?.value as string) as RewardDataType[];
+    } else {
+        return null;
+    }
+
+}
+
+export async function checkRewardUsage(discount_codes: any[] | null, rewardList: any) {
+    console.log('discount_codes', discount_codes);
+    if (discount_codes === null) {
+        return null;
+    } else if (discount_codes.length > 0) {
+        let rewards = await getCustomerRewards(rewardList);
+        for (const value of discount_codes) {
+            if (rewards !== null) {
+                const reward = rewards.find((r) => r.code === value.code);
+                if (reward) {
+                    reward.status = false;
+                    const rewardClass = new RewardClass(reward);
+                    rewardClass.save().then((r) =>
+                        console.log(`--Reward ${rewardClass.id} is update successfully!`)
+                    )
+                }
+            }
+        }
+
+        return rewards;
+    } else {
+        return null;
+    }
+}
+

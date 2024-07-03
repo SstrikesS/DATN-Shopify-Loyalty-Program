@@ -44,8 +44,11 @@ export async function getRedeemPointPrograms(storeId: string, state = false): Pr
 
 export async function getRedeemPointProgram(storeId: string, id: string) {
     const mongooseData = await RedeemPointModel.findOne({store_id: storeId, id: id}, null, {lean: true});
-
-    return modelsToClass(mongooseData);
+    if (mongooseData === null || mongooseData === undefined) {
+        return null;
+    } else {
+        return modelsToClass(mongooseData);
+    }
 }
 
 export async function getSpecificCustomerRedeemPointProgram(storeId: string, customerId: string): Promise<RedeemPointType[] | null> {
