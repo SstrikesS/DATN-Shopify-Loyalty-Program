@@ -3,7 +3,7 @@
 client_id = "8bcba1b46efe7d2cf3e15bd061b1d1b9"
 name = "loyalty-customer-reward"
 handle = "loyalty-customer-reward"
-application_url = "https://arctic-into-incomplete-remainder.trycloudflare.com"
+application_url = "https://phillips-increasingly-criteria-stack.trycloudflare.com"
 embedded = true
 
 [build]
@@ -17,16 +17,16 @@ scopes = "read_customers,read_discounts,read_orders,read_products,read_shipping,
 
 [auth]
 redirect_urls = [
-  "https://arctic-into-incomplete-remainder.trycloudflare.com/auth/callback",
-  "https://arctic-into-incomplete-remainder.trycloudflare.com/auth/shopify/callback",
-  "https://arctic-into-incomplete-remainder.trycloudflare.com/api/auth/callback"
+  "https://phillips-increasingly-criteria-stack.trycloudflare.com/auth/callback",
+  "https://phillips-increasingly-criteria-stack.trycloudflare.com/auth/shopify/callback",
+  "https://phillips-increasingly-criteria-stack.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
 api_version = "2024-07"
 
 [app_proxy]
-url = "https://arctic-into-incomplete-remainder.trycloudflare.com"
+url = "https://phillips-increasingly-criteria-stack.trycloudflare.com"
 subpath = "frontend"
 prefix = "apps"
 

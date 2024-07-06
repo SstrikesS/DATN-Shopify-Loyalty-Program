@@ -1,4 +1,7 @@
 import CustomerModel from "~/models/customer";
+import {Tier} from "~/class/tier.class";
+import {getTiers} from "~/server/server.tier";
+import type Store from "~/class/store.class";
 
 export type VipPointType = {
     point: number,
@@ -21,10 +24,11 @@ export type CustomerType = {
     lastEarnPoint: Date,
     lastUsedPoint: Date,
     vipPoint: VipPointType,
+    createdAt: Date,
     status: boolean,
 }
 
-export default class Customer {
+export default class CustomerClass {
     private readonly _id: string;
     private readonly _store_id: string;
     private _name: string;
@@ -40,6 +44,7 @@ export default class Customer {
     private _lastEarnPoint: Date;
     private _lastUsedPoint: Date;
     private _vipPoint: VipPointType;
+    private readonly _createdAt: Date;
     private _status: boolean;
 
     constructor(data: CustomerType) {
@@ -58,6 +63,7 @@ export default class Customer {
         this._lastEarnPoint = data.lastEarnPoint;
         this._lastUsedPoint = data.lastUsedPoint;
         this._vipPoint = data.vipPoint;
+        this._createdAt = data.createdAt
         this._status = data.status;
     }
 
@@ -68,6 +74,11 @@ export default class Customer {
 
     get store_id(): string {
         return this._store_id;
+    }
+
+
+    get createdAt(): Date {
+        return this._createdAt;
     }
 
     get name(): string {
@@ -182,7 +193,45 @@ export default class Customer {
         this._status = value;
     }
 
-    addPoint(order_price: number, perk: number, earn_point_value: number, type: string, vipType: string | null = null) {
+    async checkTier(current_point: number) {
+        const vipTierList = await getTiers(this.store_id);
+        if (vipTierList && vipTierList.length > 0) {
+            let left = 0;
+            let right = vipTierList.length;
+
+            while(left < right) {
+                const mid = Math.floor((left + right) / 2);
+                if (vipTierList[mid].entryRequirement < current_point) {
+                    left = mid + 1;
+                } else {
+                    right = mid;
+                }
+            }
+            const newPosition = left - 1 >= 0 ? left - 1 : -1;
+
+            if(newPosition !== -1 && this.vipTierId !== vipTierList[newPosition].id) {
+                if(this.vipTierId !== null && this.vipTierId !== undefined) {
+                    const currentTierData = vipTierList.find(r => r.id === this.vipTierId);
+                    if(currentTierData !== null && currentTierData !== undefined) {
+                        const currentTier = new Tier(currentTierData);
+                        currentTier.customerCount = currentTier.customerCount - 1;
+                        currentTier.saveTier().then((r) =>
+                            console.log(`Tier ${currentTier.id} is updated successfully`)
+                        )
+                    }
+                }
+
+                this.vipTierId = vipTierList[newPosition].id;
+                const newTier = new Tier(vipTierList[newPosition]);
+                newTier.customerCount = newTier.customerCount - 1;
+                newTier.saveTier().then((r) =>
+                    console.log(`Tier ${newTier.id} is updated successfully`)
+                )
+            }
+        }
+    }
+
+    async addPoint(store: Store, order_price: number, perk: number, earn_point_value: number, type: string, vipType: string | null = null) {
         let pointEarn = 0;
         if (type === 'money_spent') {
             pointEarn = parseInt((order_price * earn_point_value * (perk + 100) / 100).toFixed(2));
@@ -192,20 +241,22 @@ export default class Customer {
 
         this.pointBalance = this.pointBalance + pointEarn;
         this.pointEarn = this.pointEarn + pointEarn;
+        store.pointTransaction = store.pointTransaction + 1
         if (vipType === 'money_spent') {
             this.vipPoint = {
                 point: this.vipPoint.point,
                 money_spent: this.vipPoint.money_spent + pointEarn,
             } as VipPointType;
+            await this.checkTier(this.vipPoint.money_spent);
         } else if (vipType === 'point') {
             this.vipPoint = {
                 money_spent: this.vipPoint.money_spent,
                 point: this.vipPoint.point + pointEarn,
             } as VipPointType;
+            await this.checkTier(this.vipPoint.point);
         }
 
         this.save().then((r) => {
-            console.log(r);
             console.log(`--Update Customer ${this.id} successfully!--`);
         });
     }

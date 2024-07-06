@@ -9,7 +9,8 @@ export type RewardType =
     | 'DiscountCodeBasicPercentage'
     | 'DiscountCodeFreeShipping'
     | 'DiscountCodeBxgy'
-    | 'GiftCard';
+    | 'GiftCard'
+    | 'Point';
 
 export type CombineWithType = {
     shippingDiscounts: boolean,

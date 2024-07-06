@@ -5,11 +5,11 @@ import {customerQuery, rewardMetafieldCreate, rewardMetafieldGet, shopQuery} fro
 import {getStore} from "~/server/server.store";
 import Store from "~/class/store.class";
 import {getCustomer} from "~/server/server.customer";
-import Customer from "~/class/customer";
+import CustomerClass from "~/class/customer.class";
 import {getCustomerRewards} from "~/server/server.reward";
 import {getRedeemPointProgram} from "~/server/server.redeem_point";
 import {RedeemPoint} from "~/class/redeem_point.class";
-import type { RewardDataType} from "~/class/reward.class";
+import type {RewardDataType} from "~/class/reward.class";
 import {RewardClass} from "~/class/reward.class";
 
 export async function loader({request}: LoaderFunctionArgs) {
@@ -26,7 +26,7 @@ export async function loader({request}: LoaderFunctionArgs) {
         const {data} = await response.json();
         const store = await getStore(data.shop);
         const customer = await getCustomer(data.customer, data.shop.id);
-        if (store instanceof Store && customer instanceof Customer) {
+        if (store instanceof Store && customer instanceof CustomerClass) {
             const rewards = await getCustomerRewards(data.customer);
 
             return json({
@@ -66,7 +66,7 @@ export async function action({request}: ActionFunctionArgs) {
         const store = await getStore(data.shop);
         const customer = await getCustomer(data.customer, data.shop.id);
         const redeemProgramData = await getRedeemPointProgram(data.shop.id, redeem_program_id);
-        if (store instanceof Store && customer instanceof Customer && redeemProgramData !== null) {
+        if (store instanceof Store && customer instanceof CustomerClass && redeemProgramData !== null) {
             const redeemProgram = new RedeemPoint(redeemProgramData);
             if (customer.pointBalance >= redeemProgram.pointValue) {
                 if (await redeemProgram.checkLimitUsage(customer.id)) {
@@ -105,7 +105,7 @@ export async function action({request}: ActionFunctionArgs) {
                                             redeemProgram.type === 'DiscountCodeBxgy' ? null :
                                                 redeemProgram.type === 'GiftCard' ? null : null,
                                 endAt: data?.discountCodeBasicCreate?.codeDiscountNode?.codeDiscount?.endsAt !== null ? new Date(data?.discountCodeBasicCreate?.codeDiscountNode?.codeDiscount?.endsAt) : null,
-                                startAt: new Date (data?.discountCodeBasicCreate?.codeDiscountNode?.codeDiscount?.startsAt),
+                                startAt: new Date(data?.discountCodeBasicCreate?.codeDiscountNode?.codeDiscount?.startsAt),
                             } as RewardDataType;
                             //Save to metafield
                             const responseQuery = await admin.graphql(`
@@ -115,7 +115,7 @@ export async function action({request}: ActionFunctionArgs) {
                             );
                             const responseQueryBody = await responseQuery.json();
                             let value: RewardDataType[] = [];
-                            if(responseQueryBody.data.customer.metafield.value) {
+                            if (responseQueryBody.data.customer.metafield.value) {
                                 value = JSON.parse(responseQueryBody.data.customer.metafield.value) as RewardDataType[];
                             }
                             value.push(rewardData)
@@ -127,15 +127,19 @@ export async function action({request}: ActionFunctionArgs) {
                             );
                             const responseMutationBody = await responseMutation.json();
                             //Save to mongoDB
-                            if(responseMutationBody.data?.metafieldsSet) {
+                            if (responseMutationBody.data?.metafieldsSet) {
                                 const reward = new RewardClass(rewardData);
                                 customer.pointBalance = customer.pointBalance - redeemProgram.pointValue;
                                 customer.pointSpent = customer.pointSpent + redeemProgram.pointValue;
+                                store.pointTransaction = store.pointTransaction + 1;
                                 await customer.save().then((r) =>
                                     console.log(`--Update customer ${customer.id} successfully`)
                                 );
                                 await reward.save().then((r) =>
                                     console.log(`--Update reward successfully--`)
+                                )
+                                store.saveStore().then((r) =>
+                                    console.log(`--Update store ${store.id} successfully--`)
                                 )
 
                                 return json({

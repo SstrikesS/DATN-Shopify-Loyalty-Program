@@ -133,21 +133,21 @@ export async function getSpecificCustomerVipTier(storeId: string, tierId: string
         let nextTier;
         let previousTier;
         if (currentTier !== null) {
-            if (currentTier.nextTier) {
+            if (currentTier.nextTier !== null && currentTier.nextTier !== undefined) {
                 nextTier = await getTier(storeId, currentTier.nextTier);
             } else {
                 nextTier = null;
             }
-            if (currentTier.previousTier) {
+            if (currentTier.previousTier !== null && currentTier.previousTier !== undefined) {
                 previousTier = await getTier(storeId, currentTier.previousTier)
             } else {
                 previousTier = null;
             }
 
             return {
-                currentTier: modelsToClass(currentTier),
-                nextTier: nextTier !== null ? modelsToClass(nextTier) : null,
-                previousTier: previousTier !== null ? modelsToClass(previousTier) : null
+                currentTier: currentTier,
+                nextTier: nextTier !== null ? nextTier : null,
+                previousTier: previousTier !== null ? previousTier : null
             }
         } else {
 

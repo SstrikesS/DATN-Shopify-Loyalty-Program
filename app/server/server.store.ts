@@ -1,5 +1,5 @@
 import storeModel from "~/models/storeSetting"
-import type { PointSetting, StoreType, VIPSetting} from "~/class/store.class";
+import type {PointSetting, StoreType, VIPSetting} from "~/class/store.class";
 import Store from "~/class/store.class";
 import {de_pointSetting, de_vipSetting} from "~/utils/helper";
 
@@ -14,6 +14,10 @@ type ShopifyShop = {
 function modelsToClass(models: any) {
     return {
         id: models.id,
+        orderCount: models.order_count,
+        totalSale: models.total_sale,
+        totalEarn: models.total_earn,
+        pointTransaction: models.point_transaction,
         vipSetting: {
             milestoneType: models.vip_program_setting.milestoneType,
             program_reset_time: models.vip_program_setting.program_reset_time,
@@ -50,6 +54,10 @@ export async function isMemberStore(shopShopify: ShopifyShop) {
 export async function addNewMemberStore(storeId: string) {
     await storeModel.create({
         id: storeId,
+        order_count: 0,
+        total_sale: 0,
+        total_earn: 0,
+        point_transaction: 0,
         vip_program_setting: de_vipSetting,
         point_program_setting: de_pointSetting,
         status: true,

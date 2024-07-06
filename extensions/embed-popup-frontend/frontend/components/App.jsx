@@ -1,4 +1,4 @@
-import {useEffect, useState} from "react";
+import {useEffect, useRef, useState} from "react";
 import LoginPage from "../components/LoginPage";
 import MainPage from "../components/MainPage";
 import LayoutPage from "../components/Layout";
@@ -12,7 +12,7 @@ import EditDate from "../components/EditDate";
 import {AppResourceLoader} from "../utils/loader.js";
 
 export default function App() {
-    const modal = document.getElementById("major-popup-parent");
+    const modalRef = useRef(null);
     const [resource, setResource] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [page, setPage] = useState('main-page');
@@ -34,7 +34,8 @@ export default function App() {
     }, []);
 
     const PopupHandler = () => {
-        if (modal?.style?.display !== "block") {
+        const modal = modalRef.current;
+        if (modal?.style?.display !== "block" && modal?.style?.display !== null && modal?.style?.display !== undefined) {
             modal.style.display = "block";
         } else {
             modal.style.display = "none";
@@ -53,7 +54,7 @@ export default function App() {
         return (
             <div className="tw-text-5xl tw-text-red-600">
                 <button id="major-popup-button" onClick={PopupHandler}></button>
-                <div id="major-popup-parent">
+                <div id="major-popup-parent" ref={modalRef}>
                     <div><Spin indicator={<LoadingOutlined style={{fontSize: 24}} spin/>}/></div>
                 </div>
             </div>
@@ -62,7 +63,7 @@ export default function App() {
         return (
             <div className="tw-text-5xl tw-text-red-600">
                 <button id="major-popup-button" onClick={PopupHandler}></button>
-                <div id="major-popup-parent">
+                <div id="major-popup-parent" ref={modalRef}>
                     {page === 'login-page' ?
                         <div id="login-page" className={`popup-page ${page === 'login-page' ? 'active' : ''}`}>
                             <LayoutPage resource={resource} shop={window.shop} childComponent={loginPageComponent}/>

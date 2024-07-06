@@ -1,5 +1,5 @@
-import {CombineWithType, discountCodeBasicCreateQueryType} from "~/class/redeem_point.class";
-import {RewardDataType} from "~/class/reward.class";
+import type {discountCodeBasicCreateQueryType} from "~/class/redeem_point.class";
+import type {RewardDataType} from "~/class/reward.class";
 import {escapeJsonString} from "~/utils/helper";
 
 export const shopQuery =
@@ -68,6 +68,29 @@ export const customerQuery = (id: string) =>
         phone
         image {
             url
+        }
+    }
+`
+
+export const customerListQuery = (limit: number, query: string) =>
+`
+    query MyQuery {
+         customers(first: ${limit}, query: "${query} AND state:ENABLED") {
+             edges {
+                 node {
+                     displayName
+                     addresses {
+                         longitude
+                         latitude
+                     }
+                     email
+                     id
+                     phone
+                     image {
+                         url
+                     }
+                 }
+             }
         }
     }
 `

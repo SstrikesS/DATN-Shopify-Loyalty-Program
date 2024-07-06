@@ -75,20 +75,20 @@ export async function action({request}: ActionFunctionArgs) {
             id: formData.get('id') as string,
             store_id: store.id,
             name: formData.get('name') as string,
-            status: formData.get('status') !== null ? formData.get('status') === 'true' : earnPointData.status ,
-            limitUsage: formData.get('limitUsage') !== null  ? parseInt(formData.get('limitUsage') as string) : -1,
-            limitResetInterval: formData.get('limitResetInterval') !== null ? formData.get('limitResetInterval') as string : earnPointData.limitResetInterval,
+            status: formData.get('status') !== null ? formData.get('status') === 'true' : earnPointData?.status,
+            limitUsage: formData.get('limitUsage') !== null ? parseInt(formData.get('limitUsage') as string) : -1,
+            limitResetInterval: formData.get('limitResetInterval') !== null ? formData.get('limitResetInterval') as string : earnPointData?.limitResetInterval,
             limitResetValue: 1,
-            customerEligibility: formData.get('customerEligibility') !== null ? formData.get('customerEligibility') as string: earnPointData.customerEligibility,
-            type: earnPointData.type,
-            icon: earnPointData.icon,
-            pointValue: formData.get('pointValue') !== null ? parseInt(formData.get('pointValue') as string) : earnPointData.pointValue
+            customerEligibility: formData.get('customerEligibility') !== null ? formData.get('customerEligibility') as string : "null",
+            type: earnPointData?.type,
+            icon: earnPointData?.icon,
+            pointValue: formData.get('pointValue') !== null ? parseInt(formData.get('pointValue') as string) : earnPointData?.pointValue
         } as EarnPointType
 
         const earnPoint = new EarnPoint(updateData);
         await earnPoint.saveEarnPoint();
 
-        return({
+        return ({
             success: true,
             message: 'Earn Point Program is updated successfully'
         })
@@ -127,7 +127,7 @@ export default function EarnSingular() {
             setIsSubmitting(false);
         } else {
             const formData = new FormData();
-            formData.append('id', data?.earnPointProgramData.id as string);
+            formData.append('id', data?.earnPointProgramData?.id as string);
             formData.append('name', programName);
             formData.append('pointValue', `${rewardPoint}`);
             formData.append('status', `${programStatus !== 'disable'}`);
@@ -136,19 +136,19 @@ export default function EarnSingular() {
                 formData.append('limitUsage', limitTimesUse);
                 formData.append('limitResetInterval', limitTimeUnit);
             }
-            if(isVipLimit) {
+            if (isVipLimit) {
                 formData.append('customerEligibility', `${vipLimit}/${tierLimit}`);
             }
             submit(formData, {replace: true, method: 'PUT', encType: "multipart/form-data"});
         }
 
     }
-    const programStatusHandler = useCallback((newValue: boolean, id: string) => {
+    const programStatusHandler = useCallback((_newValue: boolean, id: string) => {
         setProgramStatus(id);
         setIsDataChange(true);
     }, [],);
 
-    const programTypeHandler = useCallback((newValue: boolean, id: string) => {
+    const programTypeHandler = useCallback((_newValue: boolean, id: string) => {
         setProgramType(id);
         setIsDataChange(true);
     }, [],)
@@ -169,7 +169,7 @@ export default function EarnSingular() {
         setIsDataChange(true);
     }, [],);
 
-    const handleIsLimitTimeUseChange = useCallback((value: boolean, id: string) => {
+    const handleIsLimitTimeUseChange = useCallback((_value: boolean, _id: string) => {
         setIsLimitTimesUse(prevState => !prevState);
         setIsDataChange(true);
     }, [])
@@ -184,12 +184,12 @@ export default function EarnSingular() {
         setIsDataChange(true);
     }, []);
 
-    const handleIsVipLimitChange = useCallback((value: boolean, id: string) => {
+    const handleIsVipLimitChange = useCallback((_value: boolean, _id: string) => {
         setIsVipLimit(prevState => !prevState);
         setIsDataChange(true);
     }, []);
 
-    const handleVipLimitChange = useCallback((value: boolean, id: string) => {
+    const handleVipLimitChange = useCallback((_value: boolean, id: string) => {
         setVipLimit(id);
         setIsDataChange(true);
     }, []);
@@ -230,21 +230,21 @@ export default function EarnSingular() {
 
     useEffect(() => {
         if (data !== null) {
-            if (data?.earnPointProgramData.status) {
+            if (data?.earnPointProgramData?.status) {
                 setProgramStatus('active')
             } else {
                 setProgramStatus('disable')
             }
-            setRewardPoint(data?.earnPointProgramData.pointValue)
-            setProgramName(data?.earnPointProgramData.name)
-            setProgramType(data?.earnPointProgramData.type.split('/')[1]);
+            setRewardPoint(data?.earnPointProgramData?.pointValue ? data?.earnPointProgramData?.pointValue : 500)
+            setProgramName(data?.earnPointProgramData?.name ? data?.earnPointProgramData?.name : "Program Name")
+            setProgramType(data?.earnPointProgramData?.type ? data?.earnPointProgramData?.type.split('/')[1] : "place_an_order/money_spent");
             // setProgramShareLink(data?.earnPointProgramData.link ?? null);
-            if (data?.earnPointProgramData.limitUsage !== -1) {
+            if (data?.earnPointProgramData?.limitUsage !== -1) {
                 setIsLimitTimesUse(true)
-                setLimitTimesUse(`${data?.earnPointProgramData.limitUsage}`);
-                setLimitTimeUnit(data?.earnPointProgramData.limitResetInterval)
+                setLimitTimesUse(data?.earnPointProgramData?.limitUsage ? `${data?.earnPointProgramData?.limitUsage}` : "0");
+                setLimitTimeUnit(data?.earnPointProgramData?.limitResetInterval ? data?.earnPointProgramData?.limitResetInterval as string : "day")
             }
-            if (data?.earnPointProgramData.customerEligibility && data?.earnPointProgramData.customerEligibility !== "null") {
+            if (data?.earnPointProgramData?.customerEligibility && data?.earnPointProgramData.customerEligibility !== "null") {
                 const requirement = data?.earnPointProgramData.customerEligibility.split('/');
                 setIsVipLimit(data.vipProgram.status);
                 setTierLimit(requirement[1])
@@ -274,7 +274,7 @@ export default function EarnSingular() {
         {label: 'year', value: 'year'},
     ];
 
-    const tierTierOption = data?.vipTierList.map((item) => {
+    const tierTierOption = data?.vipTierList?.map((item) => {
         return {
             label: item.name,
             value: item.id,
@@ -317,7 +317,7 @@ export default function EarnSingular() {
                         <Layout>
                             <Layout.Section variant="oneHalf">
                                 <Form onSubmit={handleSubmit}>
-                                    {data?.earnPointProgramData.type.split('/')[0] === 'place_an_order' ? (
+                                    {data?.earnPointProgramData?.type.split('/')[0] === 'place_an_order' ? (
                                         <BlockStack gap="500">
                                             <Card>
                                                 <BlockStack gap="500">
@@ -491,7 +491,7 @@ export default function EarnSingular() {
                                                 </BlockStack>
                                             </Card>
                                         </BlockStack>
-                                    ) : data?.earnPointProgramData.type === 'happy_birthday' ? (
+                                    ) : data?.earnPointProgramData?.type === 'happy_birthday' ? (
                                         <BlockStack gap="500">
                                             <Card>
                                                 <BlockStack gap="500">
@@ -601,7 +601,7 @@ export default function EarnSingular() {
                                                 </BlockStack>
                                             </Card>
                                         </BlockStack>
-                                    ) : data?.earnPointProgramData.type === 'share_on_facebook' ? (
+                                    ) : data?.earnPointProgramData?.type === 'share_on_facebook' ? (
                                         <BlockStack gap="500">
                                             <Card>
                                                 <BlockStack gap="500">
@@ -763,7 +763,7 @@ export default function EarnSingular() {
                                                 </BlockStack>
                                             </Card>
                                         </BlockStack>
-                                    ) : data?.earnPointProgramData.type === 'sign_in' ? (
+                                    ) : data?.earnPointProgramData?.type === 'sign_in' ? (
                                         <BlockStack gap="500">
                                             <Card>
                                                 <BlockStack gap="500">

@@ -1,15 +1,14 @@
-import type Customer from "~/class/customer";
+import type CustomerClass from "~/class/customer.class";
 import type Store from "~/class/store.class";
 import {getEarnPointProgramByType} from "~/server/server.earn_point";
 import EarnPoint from "~/class/earn_point.class";
 import {getTier} from "~/server/server.tier";
 
 
-export async function ProgramHandler(store: Store, customer: Customer, order_subtotal: number) {
+export async function ProgramHandler(store: Store, customer: CustomerClass, order_subtotal: number) {
     const earnPointProgramData = await getEarnPointProgramByType(store.id, 'complete_an_order')
     if (earnPointProgramData !== null && store.pointSetting.status) {
         const earnPointProgram = new EarnPoint(earnPointProgramData);
-
         if (await earnPointProgram.checkLimitUsage(customer.id)) {
             if(store.vipSetting.status) {
                 if (customer.vipTierId !== undefined && customer.vipTierId !== null) {
@@ -17,7 +16,8 @@ export async function ProgramHandler(store: Store, customer: Customer, order_sub
                         const vipTier = await getTier(store.id, customer.vipTierId);
 
                         if (vipTier !== undefined && vipTier !== null) {
-                            customer.addPoint(order_subtotal, vipTier?.bonusPointEarn, earnPointProgram.pointValue, earnPointProgram.type.split('/')[1], store.vipSetting.milestoneType)
+                            await customer.addPoint(store, order_subtotal, vipTier?.bonusPointEarn, earnPointProgram.pointValue, earnPointProgram.type.split('/')[1], store.vipSetting.milestoneType)
+
                             return true;
                         } else {
 
@@ -32,11 +32,11 @@ export async function ProgramHandler(store: Store, customer: Customer, order_sub
                     }
                 }
 
-                customer.addPoint(order_subtotal, 0, earnPointProgram.pointValue, earnPointProgram.type.split('/')[1], store.vipSetting.milestoneType)
+                await customer.addPoint(store, order_subtotal, 0, earnPointProgram.pointValue, earnPointProgram.type.split('/')[1], store.vipSetting.milestoneType)
                 return true;
             } else {
 
-                customer.addPoint(order_subtotal, 0, earnPointProgram.pointValue, earnPointProgram.type.split('/')[1], null)
+                await customer.addPoint(store, order_subtotal, 0, earnPointProgram.pointValue, earnPointProgram.type.split('/')[1], null)
                 return true;
             }
         } else {

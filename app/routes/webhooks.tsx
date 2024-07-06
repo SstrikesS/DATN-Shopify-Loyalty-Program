@@ -3,9 +3,9 @@ import {authenticate} from "~/shopify.server";
 import db from "../db.server";
 import {customerQuery, rewardMetafieldCreate, shopQuery} from "~/utils/shopify_query";
 import {getStore} from "~/server/server.store";
-import {getCustomer} from "~/server/server.customer";
+import {addCustomer, getCustomer} from "~/server/server.customer";
 import Store from "~/class/store.class";
-import Customer from "~/class/customer";
+import CustomerClass from "~/class/customer.class";
 import {ProgramHandler} from "~/server/server.webhook.order_paid";
 import {checkRewardUsage} from "~/server/server.reward";
 
@@ -24,7 +24,6 @@ export const action = async ({request}: ActionFunctionArgs) => {
             if (session) {
                 await db.session.deleteMany({where: {shop}});
             }
-
             break;
         case "ORDERS_PAID":
             console.log("--Webhook ORDERS_PAID triggers--");
@@ -38,9 +37,9 @@ export const action = async ({request}: ActionFunctionArgs) => {
                 const {data} = await response.json();
                 const store = await getStore(data.shop);
                 const customer = await getCustomer(data.customer, data.shop.id);
-                if (store instanceof Store && customer instanceof Customer) {
+                if (store instanceof Store && customer instanceof CustomerClass) {
                     if (await ProgramHandler(store, customer, parseFloat(payload.subtotal_price))) {
-                        const rewards = await checkRewardUsage(payload.discount_codes, data.customer)
+                        const rewards = await checkRewardUsage(store, payload.discount_codes, data.customer, parseFloat(payload.total_price))
                         if(rewards) {
                             const response = await admin.graphql(`
                             mutation MyMutation {
@@ -52,8 +51,14 @@ export const action = async ({request}: ActionFunctionArgs) => {
                             if(responseBody.data.metafieldsSet) {
                                 console.log(`--Reward of customer ${customer.id} is updated successfully--`);
                             }
+
+                            store.orderCount = store.orderCount + 1;
+                            store.totalEarn = store.totalEarn + parseFloat(payload.subtotal_price)
                         }
 
+                        store.saveStore().then((r) =>
+                            console.log(`Store ${store.id} is updated successfully`)
+                        );
                         console.log(`--Webhook ORDERS_PAID executed successfully--`);
                     } else {
                         console.log(`--Webhook ORDERS_PAID executed with ERROR--`);
@@ -65,6 +70,22 @@ export const action = async ({request}: ActionFunctionArgs) => {
             break;
         case "PRODUCTS_UPDATE":
             console.log("--Webhook PRODUCTS_UPDATE triggers--");
+            break;
+        case "CUSTOMERS_CREATE":
+            console.log("--Webhook CUSTOMERS_CREATE triggers--");
+            if (session) {
+                const response = await admin.graphql(`
+                query MyQuery {
+                    ${shopQuery}
+                    ${customerQuery('gid://shopify/Customer/' + payload.id)}
+                }`
+                );
+                const {data} = await response.json();
+                const store = await getStore(data.shop);
+                if(store instanceof Store) {
+                    addCustomer(data.customer, store.id)
+                }
+            }
             break;
         case "CUSTOMERS_DATA_REQUEST":
             break;

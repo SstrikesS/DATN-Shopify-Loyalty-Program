@@ -1,4 +1,4 @@
-import {Button, Flex, theme, Divider, Spin, Progress} from "antd";
+import {Button, Flex, theme, Divider, Spin} from "antd";
 import {LoadingOutlined, RightOutlined} from "@ant-design/icons";
 
 export default function MainPage({resource, page, setPage}) {
@@ -187,16 +187,23 @@ export default function MainPage({resource, page, setPage}) {
                                 </p>
                                 {resource.vipTiers.nextTier ?
                                     <div style={{
-                                        maxWidth: '250px',
+                                        maxWidth: '270px',
                                     }}>
-                                        <Progress
-                                            status="active"
-                                            percent={parseFloat((resource.customer._vipPoint[resource.store._vipSetting.milestoneType] / resource.vipTiers.nextTier.entryRequirement * 100).toFixed(2))}/>
+                                        <div className="w3-grey w3-round-large">
+                                            <div className="w3-container w3-blue w3-round-large"
+                                                 style={{width: `${parseFloat((resource.customer._vipPoint[resource.store._vipSetting.milestoneType] / resource.vipTiers.nextTier.entryRequirement * 100).toFixed(2))}%`}}>{parseFloat((resource.customer._vipPoint[resource.store._vipSetting.milestoneType] / resource.vipTiers.nextTier.entryRequirement * 100).toFixed(2))}%
+                                            </div>
+                                        </div>
+                                        <br/>
                                     </div> :
                                     <div style={{
                                         maxWidth: '250px',
                                     }}>
-                                        <Progress status="active" percent={100}/>
+                                        <div className="w3-grey w3-round-large">
+                                            <div className="w3-container w3-blue w3-round-large"
+                                                 style={{width: "100%"}}> 100%
+                                            </div>
+                                        </div>
                                     </div>
 
                                 }

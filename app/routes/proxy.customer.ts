@@ -5,7 +5,7 @@ import {customerQuery, shopQuery} from "~/utils/shopify_query";
 import {getStore} from "~/server/server.store";
 import Store from "~/class/store.class";
 import {getCustomer} from "~/server/server.customer";
-import Customer from "~/class/customer";
+import CustomerClass from "~/class/customer.class";
 
 export async function loader({request}: LoaderFunctionArgs) {
     const {admin} = await authenticate.public.appProxy(request);
@@ -21,7 +21,7 @@ export async function loader({request}: LoaderFunctionArgs) {
         const {data} = await response.json();
         const store = await getStore(data.shop);
         const customer = await getCustomer(data.customer,data.shop.id);
-        if (store instanceof Store && customer instanceof Customer) {
+        if (store instanceof Store && customer instanceof CustomerClass) {
 
             return json({
                 data: {
@@ -51,7 +51,7 @@ export async function action ({request}: ActionFunctionArgs) {
         const {data} = await response.json();
         const store = await getStore(data.shop);
         const customer = await getCustomer(data.customer, data.shop.id);
-        if (store instanceof Store && customer instanceof Customer) {
+        if (store instanceof Store && customer instanceof CustomerClass) {
 
             return json({
                 data: {

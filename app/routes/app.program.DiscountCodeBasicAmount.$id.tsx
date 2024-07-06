@@ -322,7 +322,7 @@ export default function NewReward() {
         setPrefixCode(value);
         setIsDataChange(true)
     }, [],);
-    const handleCombinationCheckboxChange = useCallback((newChecked: boolean, id: string) => setCombinationCheckbox((prevState) => {
+    const handleCombinationCheckboxChange = useCallback((_newChecked: boolean, id: string) => setCombinationCheckbox((prevState) => {
             const newState = {...prevState};
 
             switch (id) {
@@ -346,7 +346,7 @@ export default function NewReward() {
         }),
         [],
     );
-    const handleChangeIsMinimumRequirementChange = useCallback((newValue: boolean, id: string) => {
+    const handleChangeIsMinimumRequirementChange = useCallback((_newValue: boolean, id: string) => {
         setIsSetMinimumRequirement(id);
         setMinimumRequire('');
         setIsDataChange(true);
@@ -355,7 +355,7 @@ export default function NewReward() {
         setMinimumRequire(value);
         setIsDataChange(true)
     }, [],);
-    const handleIsRewardExpiryChange = useCallback((newValue: boolean, id: string) => {
+    const handleIsRewardExpiryChange = useCallback((_newValue: boolean, id: string) => {
         setIsRewardExpiry(id);
         if(id === 'no_expired') {
             setSelectedDate((previous) => {
@@ -374,7 +374,7 @@ export default function NewReward() {
         },
         [],
     );
-    const handleProgramApplyChange = useCallback((newValue: boolean, id: string) => {
+    const handleProgramApplyChange = useCallback((_newValue: boolean, id: string) => {
         setProgramApply(id);
         if(id === 'entire_order') {
             setSelectedCollection(undefined);
@@ -382,7 +382,7 @@ export default function NewReward() {
         setIsDataChange(true);
     }, [],);
 
-    const programStatusHandler = useCallback((newValue: boolean, id: string) => {
+    const programStatusHandler = useCallback((_newValue: boolean, id: string) => {
         setProgramStatus(id);
         setIsDataChange(true);
     }, [],);

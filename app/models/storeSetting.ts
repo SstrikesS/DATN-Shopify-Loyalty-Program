@@ -24,6 +24,10 @@ const VIPProgramSchema = new Schema({
 
 const StoreSchema = new Schema({
     id: { type: String, required: true },
+    order_count: {type: Number, default: 0},
+    total_sale: {type: Number, default: 0},
+    total_earn: {type: Number, default: 0},
+    point_transaction: {type: Number, default: 0},
     point_program_setting: { type: PointProgramSchema,  required: true },
     vip_program_setting: { type: VIPProgramSchema,  required: true },
     status: { type: Boolean, required: true, default: true },

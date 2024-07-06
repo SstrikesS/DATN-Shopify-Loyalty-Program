@@ -4,8 +4,9 @@
         render 'vite-tag' with 'theme.jsx'
     %}
 </div>
-
+<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
 <script>
+
     const home = `{{ request.path | json }}`
     const template = `{{ template.name }}`
     window.template = template;

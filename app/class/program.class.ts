@@ -99,6 +99,9 @@ export default class Program {
 
             return true;
         } else if (customerUsage > 0) {
+            if (this.limitUsage === -1) {
+                return true;
+            }
             updateCustomerLimit(this.store_id, customer_id, this.id, customerUsage - 1).then((r) =>
                 console.log(`--Update limit usage of program ${this.id} and customer ${customer_id}--\n--Usage left: ${customerUsage - 1}`)
             );
@@ -111,7 +114,7 @@ export default class Program {
     }
 
     checkCustomerEligibility(tier_id: string) {
-        if (this.customerEligibility !== null && this.customerEligibility !== undefined) {
+        if (this.customerEligibility !== null && this.customerEligibility !== undefined && this.customerEligibility !== "null") {
             const customerEligibility = this.customerEligibility.split('/');
             if (customerEligibility[0] === 'include' && tier_id === customerEligibility[1]) {
                 return true;

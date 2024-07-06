@@ -6,7 +6,7 @@ export type TierType = {
     name: string,
     icon: string,
     entryRequirement: number,
-    reward: string[],
+    reward: {value: string, type: string}[],
     bonusPointEarn: number,
     previousTier: string | undefined,
     nextTier: string | undefined,
@@ -20,7 +20,7 @@ export class Tier {
     private _name: string;
     private _icon: string;
     private _entryRequirement: number;
-    private _reward: string[];
+    private _reward: {value: string, type: string}[];
     private _bonusPointEarn: number;
     private _previousTier: string | undefined;
     private _nextTier: string | undefined;
@@ -77,7 +77,7 @@ export class Tier {
         return this._reward
     }
 
-    set reward(value: string[]) {
+    set reward(value: {value: string, type: string}[]) {
         this._reward = value
     }
 

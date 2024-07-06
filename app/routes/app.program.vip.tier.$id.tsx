@@ -1,14 +1,16 @@
 import {
-    BlockStack,
+    Autocomplete,
+    BlockStack, CalloutCard,
     Card,
     Checkbox,
     ContextualSaveBar,
     DropZone,
-    Frame,
+    Frame, Icon,
     Layout,
     Page,
     Text,
-    TextField, Thumbnail
+    Button,
+    TextField, Thumbnail, ResourceList, ResourceItem, Modal
 } from "@shopify/polaris";
 import {useCallback, useEffect, useState} from "react";
 import {Form, useActionData, useLoaderData, useNavigate, useSubmit} from "@remix-run/react";
@@ -23,8 +25,18 @@ import {shopQuery} from "~/utils/shopify_query";
 import {getStore} from "~/server/server.store";
 import Store from "~/class/store.class";
 import {getTier, getTiers, sortNewTier, sortUpdateTier, updateTier} from "~/server/server.tier";
-import type { TierType} from "~/class/tier.class";
+import type {TierType} from "~/class/tier.class";
 import {Tier} from "~/class/tier.class";
+import type {SectionDescriptor} from "@shopify/polaris/build/ts/src/types";
+import {
+    CashDollarIcon,
+    DeliveryIcon,
+    DiscountIcon,
+    GiftCardIcon,
+    ProductIcon,
+    SearchIcon
+} from "@shopify/polaris-icons";
+import {getRedeemPointPrograms} from "~/server/server.redeem_point";
 
 export async function loader({request, params}: LoaderFunctionArgs) {
     const {admin} = await authenticate.admin(request);
@@ -38,7 +50,26 @@ export async function loader({request, params}: LoaderFunctionArgs) {
     if (store instanceof Store) {
 
         const id = params.id;
-        const vipTierList = await getTiers(data.shop.id);
+        const vipTierList = await getTiers(store.id);
+        const redeemProgramList = await getRedeemPointPrograms(store.id);
+        let rewardList: {
+            value: string,
+            label: string,
+        }[]
+        if (redeemProgramList !== null && redeemProgramList.length > 0) {
+            rewardList = redeemProgramList.map<{ value: string, label: string }>((r) => {
+                return {
+                    value: r.id,
+                    label: r.name,
+                }
+            })
+        } else {
+            rewardList = [] as {
+                value: string,
+                label: string,
+            }[];
+        }
+
         if (id && id !== 'new') {
             const vipTierData = await getTier(data.shop.id, id as string);
 
@@ -46,6 +77,7 @@ export async function loader({request, params}: LoaderFunctionArgs) {
                 data: {
                     shopId: id,
                     vipProgram: store.vipSetting,
+                    rewards: rewardList,
                     vipTierData: vipTierData,
                     vipTierList: vipTierList,
                 }
@@ -56,6 +88,7 @@ export async function loader({request, params}: LoaderFunctionArgs) {
                 data: {
                     shopId: id,
                     vipProgram: store.vipSetting,
+                    rewards: rewardList,
                     vipTierList: vipTierList,
                     vipTierData: null,
                 }
@@ -112,7 +145,7 @@ export async function action({request}: ActionFunctionArgs) {
                     name: formData.get('name') as string,
                     icon: `/uploads/${fileName}`,
                     entryRequirement: parseInt(formData.get('entryRequirement') as string),
-                    reward: ['tmp'],
+                    reward: formData.get('reward') !== null ? JSON.parse(formData.get('reward') as string) : [],
                     bonusPointEarn: parseInt(formData.get('bonusPointEarn') as string),
                     previousTier: formData.get('previousTier') === null ? undefined : formData.get('previousTier'),
                     nextTier: formData.get('nextTier') === null ? undefined : formData.get('nextTier'),
@@ -138,7 +171,7 @@ export async function action({request}: ActionFunctionArgs) {
                     name: formData.get('name') === null ? undefined : formData.get('name'),
                     icon: fileName.length > 0 ? `/uploads/${fileName}` : undefined,
                     entryRequirement: formData.get('entryRequirement') === null ? undefined : parseInt(formData.get('name') as string),
-                    reward: ['tmp'],
+                    reward: formData.get('reward') !== null ? JSON.parse(formData.get('reward') as string) : [],
                     bonusPointEarn: formData.get('bonusPointEarn') === null ? undefined : parseInt(formData.get('bonusPointEarn') as string),
                     previousTier: formData.get('previousTier') === null ? undefined : formData.get('previousTier'),
                     nextTier: formData.get('nextTier') === null ? undefined : formData.get('nextTier'),
@@ -167,7 +200,7 @@ export async function action({request}: ActionFunctionArgs) {
                 })
             }
         } else {
-            if(method === "POST") {
+            if (method === "POST") {
                 return json({
                     success: false,
                     message: 'Image: Invalid image files upload!\nPlease try again'
@@ -177,9 +210,9 @@ export async function action({request}: ActionFunctionArgs) {
                     id: formData.get('id') as string,
                     store_id: store.id,
                     name: formData.get('name') === null ? undefined : formData.get('name'),
-                    icon:  undefined,
+                    icon: undefined,
                     entryRequirement: formData.get('entryRequirement') === null ? undefined : parseInt(formData.get('entryRequirement') as string),
-                    reward: ['tmp'],
+                    reward: formData.get('reward') !== null ? JSON.parse(formData.get('reward') as string) : [],
                     bonusPointEarn: formData.get('bonusPointEarn') === null ? undefined : parseInt(formData.get('bonusPointEarn') as string),
                     previousTier: formData.get('previousTier') === null ? undefined : formData.get('previousTier'),
                     nextTier: formData.get('nextTier') === null ? undefined : formData.get('nextTier'),
@@ -234,15 +267,129 @@ export default function AddNewTier() {
 
 
     const [milestoneRewardCheckbox, setMilestoneRewardCheckbox] = useState({
-        add_points: true,
+        add_points: false,
         add_discounts: false
     });
 
-    const [milestoneRewardPoints, setMilestoneRewardPoints] = useState("0");
+    const [milestoneRewardPoints, setMilestoneRewardPoints] = useState("100");
     const [milestoneRewardPointsError, setMilestoneRewardPointsError] = useState<string | undefined>(undefined);
 
     const [milestonePerk, setMilestonePerk] = useState("0");
     const [milestonePerkError, setMilestonePerkError] = useState<string | undefined>(undefined);
+
+    const [rewardOptions, setRewardOptions] = useState<{ value: string, label: string }[]>(data?.rewards as {
+        value: string,
+        label: string
+    }[]);
+    const [selectedReward, setSelectedReward] = useState<string[] | undefined>(undefined);
+    const [inputRewardValue, setInputRewardValue] = useState('');
+    const [isShowModal, setIsShowModal] = useState(false);
+
+    const updateText = useCallback((value: string) => {
+            setInputRewardValue(value);
+
+            if (value === '') {
+                setRewardOptions(data?.rewards as { value: string, label: string }[]);
+                return;
+            }
+
+            const filterRegex = new RegExp(value, 'i');
+            const resultOptions = data?.rewards.filter((collectionOptions: any) =>
+                collectionOptions.title.match(filterRegex),
+            ) as { value: string, label: string }[];
+            setRewardOptions(resultOptions);
+        },
+        [data?.rewards],
+    );
+    const addRedeemPoints = () => {
+        setIsShowModal(true);
+    }
+
+    const activator = <Button size="medium" onClick={addRedeemPoints}>Add new ways</Button>;
+    const modal = <Modal
+        open={isShowModal}
+        onClose={() => setIsShowModal(false)}
+        activator={activator} title='Add new rewards'
+        secondaryActions={[
+            {
+                content: 'Cancel',
+                onAction: () => setIsShowModal(false),
+            },
+        ]}
+    >
+        <ResourceList items={[
+            {
+                id: '1',
+                url: '../program/DiscountCodeBasicAmount/new',
+                name: 'Amount discount',
+                icon: CashDollarIcon,
+            },
+            {
+                id: '2',
+                url: '../program/DiscountCodeBasicPercentage/new',
+                name: 'Percentage off',
+                icon: DiscountIcon,
+            },
+            {
+                id: '3',
+                url: '../program/DiscountCodeFreeShipping/new',
+                name: 'Free Shipping',
+                icon: DeliveryIcon,
+            },
+            {
+                id: '4',
+                url: '../program/DiscountCodeBxgy/new',
+                name: 'Free Product',
+                icon: ProductIcon,
+            },
+            {
+                id: '5',
+                url: '../program/GiftCard/new',
+                name: 'Gift Card',
+                icon: GiftCardIcon,
+            },
+        ]}
+                      renderItem={(item) => {
+                          const {id, url, name, icon} = item;
+                          const media = <Icon source={icon} tone='base'/>
+
+                          return (
+                              <ResourceItem
+                                  id={id}
+                                  url={url}
+                                  media={media}
+                                  accessibilityLabel={`View details for ${name}`}
+                              >
+                                  <Text variant="bodyMd" fontWeight="bold"
+                                        as="h3">
+                                      {name}
+                                  </Text>
+                              </ResourceItem>
+                          );
+                      }}
+        />
+    </Modal>
+
+    const textField = (
+        <Autocomplete.TextField
+            onChange={updateText}
+            label="Rewards"
+            value={inputRewardValue}
+            prefix={<Icon source={SearchIcon} tone="base"/>}
+            placeholder="Search"
+            autoComplete="off"
+            connectedRight={modal}
+        />
+    );
+
+    const removeFromSelectedReward = (indexToRemove: number) => {
+        if (selectedReward) {
+            const updatedCollection = [...selectedReward];
+            updatedCollection.splice(indexToRemove, 1);
+            setSelectedReward(updatedCollection as string[]);
+        }
+    };
+
 
     const handleNameChange = useCallback((value: string) => {
         setTierName(value)
@@ -261,6 +408,9 @@ export default function AddNewTier() {
             newState[id] = !newState[id];
             return newState;
         }));
+        if (!milestoneRewardCheckbox.add_discounts) {
+            setSelectedReward(undefined);
+        }
         setIsDataChange(true);
     }, []);
 
@@ -281,15 +431,35 @@ export default function AddNewTier() {
         },
         [],);
 
+    const updateSelection = useCallback((selected: any) => {
+            setSelectedReward(selected);
+        },
+        [],
+    );
+
     useEffect(() => {
         if (data?.vipTierData !== null && data?.vipTierData !== undefined) {
             setTierIconLink(data?.vipTierData?.icon);
             if (data?.vipTierData?.reward.length > 0) {
-                setMilestoneRewardCheckbox({
-                    add_points: true,
-                    add_discounts: false,
-                });
-                setMilestoneRewardPoints(data?.vipTierData?.reward[0])
+                const selected: string[] = data?.vipTierData?.reward.reduce<string[]>((acc, item) => {
+                    if (item.type === 'Point') {
+                        setMilestoneRewardCheckbox((previous) => ({
+                            ...previous,
+                            add_points: true,
+                        }));
+                        setMilestoneRewardPoints(item.value as string);
+                    } else if (item.type === 'Reward') {
+                        acc.push(item.value as string);
+                    }
+                    return acc;
+                }, []);
+                if(selected.length > 0) {
+                    setMilestoneRewardCheckbox((previous) => ({
+                        ...previous,
+                        add_discounts: true,
+                    }));
+                }
+                setSelectedReward(selected);
             }
             setMilestonePerk(`${data?.vipTierData.bonusPointEarn}`);
         }
@@ -358,6 +528,10 @@ export default function AddNewTier() {
             shopify.toast.show("Invalid Input!");
             setIsSubmitting(false);
         } else {
+            let reward :{
+                type: string,
+                value: string | number,
+            }[] = [];
             if (!tierIcon && tierIconLink.length === 0) {
                 shopify.toast.show("Tier image is not found");
                 setIsSubmitting(false);
@@ -368,9 +542,24 @@ export default function AddNewTier() {
                     formData.append('icon', tierIcon);
                 }
                 formData.append('entryRequirement', milestoneRequire);
+                if (milestoneRewardCheckbox.add_discounts) {
+                    if (selectedReward !== undefined && selectedReward !== null && selectedReward.length > 0) {
+                         reward = selectedReward.map((item) => {
+                            return {
+                                type: 'Reward',
+                                value: item,
+                            }
+                        })
+                    }
+                }
                 if (milestoneRewardCheckbox.add_points) {
-                    formData.append('reward_type', 'POINT');
-                    formData.append('reward', milestoneRewardPoints);
+                    reward.push({
+                        type: 'Point',
+                        value: milestoneRewardPoints,
+                    })
+                }
+                if (reward.length > 0) {
+                    formData.append('reward', JSON.stringify(reward));
                 }
                 formData.append('bonusPointEarn', milestonePerk);
                 if (previousTier) {
@@ -379,12 +568,13 @@ export default function AddNewTier() {
                 if (nextTier) {
                     formData.append('nextTier', nextTier.id);
                 }
+
                 if (data?.vipTierData !== null && data?.vipTierData !== undefined) {
                     formData.append('id', data?.vipTierData.id);
-                    if(data?.vipTierData.previousTier) {
+                    if (data?.vipTierData.previousTier) {
                         formData.append('oldPreviousTier', data?.vipTierData.previousTier);
                     }
-                    if(data?.vipTierData.nextTier) {
+                    if (data?.vipTierData.nextTier) {
                         formData.append('oldNextTier', data?.vipTierData.nextTier);
                     }
                     submit(formData, {replace: true, method: "PUT", encType: "multipart/form-data"});
@@ -668,6 +858,39 @@ export default function AddNewTier() {
                                                         checked={milestoneRewardCheckbox.add_discounts}
                                                     >
                                                     </Checkbox>
+                                                    {milestoneRewardCheckbox.add_discounts ? (
+                                                            <Autocomplete
+                                                                allowMultiple
+                                                                options={rewardOptions as unknown as SectionDescriptor[]}
+                                                                selected={selectedReward ? selectedReward : []}
+                                                                textField={textField}
+                                                                onSelect={updateSelection}
+                                                            >
+                                                            </Autocomplete>
+                                                        )
+                                                        : null
+                                                    }
+                                                    <div>
+                                                        {selectedReward?.map((selectedItem, index) => {
+                                                            const matchedOption = rewardOptions.find((rewardOption) => {
+                                                                return rewardOption.value.match(selectedItem);
+                                                            });
+                                                            return (
+                                                                <CalloutCard
+                                                                    key={index}
+                                                                    title={matchedOption?.label}
+                                                                    primaryAction={{
+                                                                        content: 'Remove',
+                                                                        onAction: () => removeFromSelectedReward(index),
+                                                                    }}
+                                                                    illustration=""
+                                                                    onDismiss={() => removeFromSelectedReward(index)
+                                                                    }
+                                                                ></CalloutCard>
+                                                            );
+                                                        })
+                                                        }
+                                                    </div>
                                                 </BlockStack>
                                             </Card>
                                             <Card>

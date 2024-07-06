@@ -1,5 +1,6 @@
 import type {DefaultIntervalType} from "~/utils/helper"
 import storeModel from "~/models/storeSetting"
+
 export type CurrencyType = {
     plural: string,
     singular: string,
@@ -10,6 +11,10 @@ export type StoreType = {
     name: string,
     url: string,
     myshopifyDomain: string,
+    orderCount: number;
+    totalSale: number;
+    totalEarn: number;
+    pointTransaction: number;
     vipSetting: VIPSetting,
     pointSetting: PointSetting,
     status: boolean,
@@ -35,6 +40,10 @@ export default class Store {
     private readonly _name: string;
     private readonly _url: string;
     private readonly _myshopifyDomain: string;
+    private _orderCount: number;
+    private _totalSale: number;
+    private _pointTransaction: number;
+    private _totalEarn: number;
     private _vipSetting: VIPSetting;
     private _pointSetting: PointSetting;
     private _status: boolean;
@@ -45,6 +54,10 @@ export default class Store {
         this._name = data.name;
         this._url = data.url;
         this._myshopifyDomain = data.myshopifyDomain;
+        this._orderCount = data.orderCount;
+        this._totalSale = data.totalSale;
+        this._totalEarn = data.totalEarn;
+        this._pointTransaction = data.pointTransaction;
         this._vipSetting = data.vipSetting;
         this._pointSetting = data.pointSetting;
         this._status = data.status ?? true;
@@ -74,6 +87,38 @@ export default class Store {
         this._pointSetting = pointSetting;
     }
 
+    get orderCount(): number {
+        return this._orderCount;
+    }
+
+    set orderCount(value: number) {
+        this._orderCount = value;
+    }
+
+    get totalSale(): number {
+        return this._totalSale;
+    }
+
+    set totalSale(value: number) {
+        this._totalSale = value;
+    }
+
+    get totalEarn(): number {
+        return this._totalEarn;
+    }
+
+    set totalEarn(value: number) {
+        this._totalEarn = value;
+    }
+
+    get pointTransaction(): number {
+        return this._pointTransaction;
+    }
+
+    set pointTransaction(value: number) {
+        this._pointTransaction = value;
+    }
+
     get id() {
         return this._id
     }
@@ -92,6 +137,10 @@ export default class Store {
 
     async saveStore() {
         await storeModel.updateOne({id: this.id}, {
+            order_count: this.orderCount,
+            total_sale: this.totalSale,
+            total_earn: this.totalEarn,
+            point_transaction: this.pointTransaction,
             vip_program_setting: this.vipSetting,
             point_program_setting: this.pointSetting,
             status: this.status,
