@@ -18,6 +18,11 @@ export default function MainPage({resource, page, setPage}) {
         setPage('redeem-point');
     }
 
+    const navigateToTierDetail = () => {
+        setPage('tier');
+    }
+
+
     // const navigateToReferral = () => {
     //     setPage('referral-page');
     // }
@@ -176,51 +181,67 @@ export default function MainPage({resource, page, setPage}) {
                             background: colorBgContainer,
                             borderRadius: borderRadiusLG,
                         }}>
-                            <Flex gap="small" vertical>
-                                <p style={{
-                                    fontWeight: "bold",
-                                    fontSize: "15px",
-                                    textAlign: "center",
-                                    display: 'flex'
+                            <Flex gap="small" justify="flex-end" align="center">
+                                <div style={{
+                                    width: "90%"
                                 }}>
-                                    {resource.vipTiers.currentTier !== null ? resource.vipTiers.currentTier.name : 'No Vip Tier'}
-                                </p>
-                                {resource.vipTiers.nextTier ?
-                                    <div style={{
-                                        maxWidth: '270px',
-                                    }}>
-                                        <div className="w3-grey w3-round-large">
-                                            <div className="w3-container w3-blue w3-round-large"
-                                                 style={{width: `${parseFloat((resource.customer._vipPoint[resource.store._vipSetting.milestoneType] / resource.vipTiers.nextTier.entryRequirement * 100).toFixed(2))}%`}}>{parseFloat((resource.customer._vipPoint[resource.store._vipSetting.milestoneType] / resource.vipTiers.nextTier.entryRequirement * 100).toFixed(2))}%
-                                            </div>
-                                        </div>
-                                        <br/>
-                                    </div> :
-                                    <div style={{
-                                        maxWidth: '250px',
-                                    }}>
-                                        <div className="w3-grey w3-round-large">
-                                            <div className="w3-container w3-blue w3-round-large"
-                                                 style={{width: "100%"}}> 100%
-                                            </div>
-                                        </div>
-                                    </div>
+                                    <Flex gap="small" vertical>
 
-                                }
-                                {resource.vipTiers.nextTier ?
-                                    <p style={{
-                                        fontWeight: "light",
-                                        fontSize: "12px",
-                                        textAlign: "center",
-                                        display: 'flex'
-                                    }}>
-                                        Earn
-                                        more {resource.vipTiers.nextTier.entryRequirement - resource.customer._vipPoint[resource.store._vipSetting.milestoneType]} {resource.store._vipSetting.milestoneType === 'money_spent' ? '$' : 'Points'} to
-                                        get tier {resource.vipTiers.nextTier.name}
-                                    </p>
-                                    : null
-                                }
+                                        <p style={{
+                                            fontWeight: "bold",
+                                            fontSize: "15px",
+                                            textAlign: "center",
+                                            display: 'flex'
+                                        }}>
+                                            {resource.vipTiers.currentTier !== null ? resource.vipTiers.currentTier.name : 'No Vip Tier'}
+                                        </p>
+                                        {resource.vipTiers.nextTier ?
+                                            <div style={{
+                                                maxWidth: '230px',
+                                            }}>
+                                                <div className="w3-grey w3-round-large">
+                                                    <div className="w3-container w3-blue w3-round-large"
+                                                         style={{width: `${parseFloat((resource.customer._vipPoint[resource.store._vipSetting.milestoneType] / resource.vipTiers.nextTier.entryRequirement * 100).toFixed(2))}%`}}>{parseFloat((resource.customer._vipPoint[resource.store._vipSetting.milestoneType] / resource.vipTiers.nextTier.entryRequirement * 100).toFixed(2))}%
+                                                    </div>
+                                                </div>
+                                                <br/>
+                                            </div> :
+                                            <div style={{
+                                                maxWidth: '230px',
+                                            }}>
+                                                <div className="w3-grey w3-round-large">
+                                                    <div className="w3-container w3-blue w3-round-large"
+                                                         style={{width: "100%"}}> 100%
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                        }
+                                        {resource.vipTiers.nextTier ?
+                                            <p style={{
+                                                fontWeight: "light",
+                                                fontSize: "12px",
+                                                textAlign: "center",
+                                                display: 'flex'
+                                            }}>
+                                                Earn
+                                                more {resource.vipTiers.nextTier.entryRequirement - resource.customer._vipPoint[resource.store._vipSetting.milestoneType]} {resource.store._vipSetting.milestoneType === 'money_spent' ? '$' : resource.store._pointSetting.currency.plural} to
+                                                get tier {resource.vipTiers.nextTier.name}
+                                            </p>
+                                            : null
+                                        }
+                                    </Flex>
+                                </div>
+
+                                <div style={{
+                                    width: "10%"
+                                }}>
+                                    <Button type="text" icon={<RightOutlined/>} onClick={navigateToTierDetail}
+                                            style={{display: 'flex'}}></Button>
+                                </div>
+
                             </Flex>
+
                         </div>
                     ) : null}
 

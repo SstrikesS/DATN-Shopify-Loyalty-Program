@@ -10,6 +10,7 @@ import {LoadingOutlined} from "@ant-design/icons";
 import {Spin} from "antd";
 import EditDate from "../components/EditDate";
 import {AppResourceLoader} from "../utils/loader.js";
+import Tier from "./Tier.jsx";
 
 export default function App() {
     const modalRef = useRef(null);
@@ -49,6 +50,7 @@ export default function App() {
     const redeemPointComponent = <RedeemPoint resource={resource} setResource={setResource} page={page} setPage={setPage}></RedeemPoint>
     const rewardIDComponent = <Reward resource={resource} page={page} setPage={setPage}></Reward>
     const editDateOfBirth = <EditDate resource={resource} page={page} setPage={setPage}/>
+    const tierDetailComponent = <Tier resource={resource} page={page} setPage={setPage}/>
 
     if (isLoading) {
         return (
@@ -96,6 +98,11 @@ export default function App() {
                     {page === 'happy-birthday' ?
                         <div id="happy-birthday" className={`popup-page ${page === 'happy-birthday' ? 'active' : ''}`}>
                             <LayoutPage resource={resource} shop={window.shop} childComponent={editDateOfBirth}/>
+                        </div> : null
+                    }
+                    {page === 'tier' ?
+                        <div id="tier" className={`popup-page ${page === 'tier' ? 'active' : ''}`}>
+                            <LayoutPage resource={resource} shop={window.shop} childComponent={tierDetailComponent}/>
                         </div> : null
                     }
                 </div>

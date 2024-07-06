@@ -1,6 +1,7 @@
 import vipTier from "~/models/tier";
 import type {TierType} from "~/class/tier.class";
 import {Tier} from "~/class/tier.class";
+import {getRedeemPointPrograms} from "~/server/server.redeem_point";
 
 function modelsToClass(models: any) {
     return {
@@ -157,5 +158,15 @@ export async function getSpecificCustomerVipTier(storeId: string, tierId: string
                 previousTier: null,
             };
         }
+    }
+}
+
+export async function getNextTierReward(storeId: string, reward: string[]) {
+    const redeemPrograms = await getRedeemPointPrograms(storeId);
+
+    if(redeemPrograms !== null) {
+        return redeemPrograms.filter(i => reward.includes(i.id))
+    } else{
+        return null;
     }
 }
